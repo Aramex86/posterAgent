@@ -14,48 +14,72 @@ async function generateRaySoImage(
   code: string,
   outputPath: string,
 ): Promise<boolean> {
-  const browser = await chromium.launch({
-    headless: true,
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-gpu",
-      "--disable-web-security",
-      "--disable-features=IsolateOrigins,site-per-process",
-    ],
-  });
+  console.log("🚀 Launching Chromium browser...");
+  let browser;
+  try {
+    browser = await chromium.launch({
+      headless: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--disable-web-security",
+        "--disable-features=IsolateOrigins,site-per-process",
+      ],
+    });
+    console.log("✅ Chromium launched successfully");
+  } catch (launchError: any) {
+    console.error("❌ Failed to launch Chromium:", launchError.message);
+    throw launchError;
+  }
+
   try {
     const page = await browser.newPage();
+    console.log("📄 New page created");
 
     // Navigate to ray.so
+    console.log("🌐 Navigating to ray.so...");
     await page.goto("https://ray.so", { waitUntil: "networkidle" });
+    console.log("✅ ray.so loaded");
     await page.waitForTimeout(2000);
 
     // Find and fill the code input
+    console.log("⌨️ Looking for code input...");
     const codeInput = page.locator('textarea, [role="textbox"]').first();
     await codeInput.waitFor({ state: "visible" });
+    console.log("✅ Code input found");
     await codeInput.click();
     await codeInput.fill(code);
+    console.log("✅ Code filled");
     await page.waitForTimeout(1500);
 
     // Find the inner window element (the actual code card with dark background)
+    console.log("🔍 Looking for window element...");
     const window = page
       .locator('[class*="DefaultFrame-module"][class*="window"]')
       .first();
 
     // Wait for the window to be visible
     await window.waitFor({ state: "visible" });
+    console.log("✅ Window element found");
 
     // Screenshot just the window element (clean, no surrounding UI)
+    console.log("📸 Taking screenshot...");
     await window.screenshot({
       path: outputPath,
       type: "png",
     });
+    console.log("✅ Screenshot saved to", outputPath);
 
     return true;
+  } catch (error: any) {
+    console.error("❌ Error during ray.so image generation:", error.message);
+    console.error("Stack:", error.stack);
+    throw error;
   } finally {
     await browser.close();
+    console.log("🔒 Browser closed");
   }
 }
 
