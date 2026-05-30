@@ -4,7 +4,10 @@ import { StateType } from "../state";
 import { env } from "../env";
 
 // Configure Cloudinary
-console.log("🔧 Configuring Cloudinary with cloud_name:", env.CLOUDINARY_CLOUD_NAME);
+console.log(
+  "🔧 Configuring Cloudinary with cloud_name:",
+  env.CLOUDINARY_CLOUD_NAME,
+);
 cloudinary.config({
   cloud_name: env.CLOUDINARY_CLOUD_NAME,
   api_key: env.CLOUDINARY_API_KEY,
@@ -51,9 +54,10 @@ export async function uploadImageNode(
 
   try {
     console.log(`📤 Uploading image to Cloudinary: ${localPath}`);
+    console.log(`🔧 Using cloud_name: ${env.CLOUDINARY_CLOUD_NAME}, preset: ${env.CLOUDINARY_UPLOAD_PRESET}`);
 
+    // Try upload with API key/secret (no preset needed)
     const result = await cloudinary.uploader.upload(localPath, {
-      upload_preset: env.CLOUDINARY_UPLOAD_PRESET,
       folder: "posteragent",
       resource_type: "image",
     });
