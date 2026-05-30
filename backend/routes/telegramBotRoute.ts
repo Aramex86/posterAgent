@@ -400,20 +400,22 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
     console.error("❌ Telegram bot error:", err);
   });
 
-  // Start bot in polling mode (more reliable than webhook for local dev)
-  try {
-    await bot.start();
-    console.log("🤖 Telegram bot started in polling mode");
-  } catch (startError: any) {
-    if (startError?.error_code === 409) {
-      console.warn(
-        "⚠️ Could not start bot polling due to 409 Conflict. Another instance is running.",
-      );
-    } else {
-      console.error("❌ Failed to start bot:", startError);
-      throw startError;
+  // Setup webhook endpoint for Railway (no polling - avoids 409 conflicts)
+  const webhookPath = "/telegram-webhook";
+  fastify.post(webhookPath, webhookCallback(bot, "fastify"));
+  console.log("🤖 Telegram webhook endpoint registered at", webhookPath);
+
+  // Set webhook URL on Telegram (only in production)
+  if (process.env.NODE_ENV === "production" || process.env.RAILWAY_ENVIRONMENT) {
+    const webhookUrl = `https://posteragent-backend-production.up.railway.app${webhookPath}`;
+    try {
+      await bot.api.setWebhook(webhookUrl);
+      console.log("✅ Telegram webhook set to:", webhookUrl);
+    } catch (webhookError: any) {
+      console.error("❌ Failed to set webhook:", webhookError.message);
     }
   }
+}
 }
 
 function escapeMarkdown(text: string): string {
