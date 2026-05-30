@@ -385,12 +385,35 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
 
   // Error handler to prevent crashes
   bot.catch((err) => {
+    const error = err.error;
+    if (
+      error &&
+      typeof error === "object" &&
+      "error_code" in error &&
+      error.error_code === 409
+    ) {
+      console.warn(
+        "⚠️ Telegram 409 Conflict: Another bot instance is running. This is normal during deployment.",
+      );
+      return;
+    }
     console.error("❌ Telegram bot error:", err);
   });
 
   // Start bot in polling mode (more reliable than webhook for local dev)
-  bot.start();
-  console.log("🤖 Telegram bot started in polling mode");
+  try {
+    await bot.start();
+    console.log("🤖 Telegram bot started in polling mode");
+  } catch (startError: any) {
+    if (startError?.error_code === 409) {
+      console.warn(
+        "⚠️ Could not start bot polling due to 409 Conflict. Another instance is running.",
+      );
+    } else {
+      console.error("❌ Failed to start bot:", startError);
+      throw startError;
+    }
+  }
 }
 
 function escapeMarkdown(text: string): string {
