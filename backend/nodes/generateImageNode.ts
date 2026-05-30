@@ -8,7 +8,7 @@ const IMAGES_DIR = join(process.cwd(), "generated-images");
 /**
  * Generate a beautiful code snippet image using ray.so
  * Opens ray.so in a headless browser, pastes the code,
- * and captures a high-resolution screenshot of the code card
+ * clicks Export Image → Save PNG, and captures the downloaded PNG
  */
 async function generateRaySoImage(
   code: string,
@@ -35,14 +35,16 @@ async function generateRaySoImage(
   }
 
   try {
-    const page = await browser.newPage();
-    console.log("📄 New page created");
+    const page = await browser.newPage({
+      viewport: { width: 1920, height: 1080 },
+    });
+    console.log("📄 New page created with 1920x1080 viewport");
 
     // Navigate to ray.so
     console.log("🌐 Navigating to ray.so...");
     await page.goto("https://ray.so", { waitUntil: "networkidle" });
     console.log("✅ ray.so loaded");
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
 
     // Find and fill the code input
     console.log("⌨️ Looking for code input...");
@@ -52,25 +54,26 @@ async function generateRaySoImage(
     await codeInput.click();
     await codeInput.fill(code);
     console.log("✅ Code filled");
-    await page.waitForTimeout(1500);
+    await page.waitForTimeout(2000);
 
-    // Find the inner window element (the actual code card with dark background)
-    console.log("🔍 Looking for window element...");
-    const window = page
-      .locator('[class*="DefaultFrame-module"][class*="window"]')
-      .first();
+    // Click "Export Image" button to open dropdown
+    console.log("🖼️ Clicking Export Image button...");
+    const exportBtn = page.locator('button:has-text("Export Image")').first();
+    await exportBtn.waitFor({ state: "visible" });
+    await exportBtn.click();
+    console.log("✅ Export dropdown opened");
+    await page.waitForTimeout(500);
 
-    // Wait for the window to be visible
-    await window.waitFor({ state: "visible" });
-    console.log("✅ Window element found");
+    // Handle the download when clicking "Save PNG"
+    console.log("💾 Clicking Save PNG...");
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page.locator('div[role="menuitem"]:has-text("Save PNG")').first().click(),
+    ]);
 
-    // Screenshot just the window element (clean, no surrounding UI)
-    console.log("📸 Taking screenshot...");
-    await window.screenshot({
-      path: outputPath,
-      type: "png",
-    });
-    console.log("✅ Screenshot saved to", outputPath);
+    // Save the downloaded file to our desired path
+    await download.saveAs(outputPath);
+    console.log("✅ ray.so PNG exported to", outputPath);
 
     return true;
   } catch (error: any) {
