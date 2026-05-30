@@ -1,10 +1,20 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
-    "builder": "NIXPACKS"
+    "builder": "NIXPACKS",
+    "nixpacksPlan": {
+      "phases": {
+        "setup": {
+          "nixPkgs": ["nodejs", "npm"]
+        },
+        "build": {
+          "cmds": ["cd backend && npm install"]
+        }
+      }
+    }
   },
   "deploy": {
-    "startCommand": "cd backend && npx playwright install chromium && npm start",
+    "startCommand": "sh -c 'cd backend && npx playwright install chromium && npm start'",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 100,
     "restartPolicyType": "ON_FAILURE",
