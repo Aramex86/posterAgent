@@ -14,7 +14,17 @@ async function generateRaySoImage(
   code: string,
   outputPath: string,
 ): Promise<boolean> {
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({
+    headless: true,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+      "--disable-web-security",
+      "--disable-features=IsolateOrigins,site-per-process",
+    ],
+  });
   try {
     const page = await browser.newPage();
 
