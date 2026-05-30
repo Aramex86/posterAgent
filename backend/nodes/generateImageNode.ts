@@ -5,181 +5,16 @@ import { join } from "node:path";
 
 const IMAGES_DIR = join(process.cwd(), "generated-images");
 
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-function highlightCode(code: string): string {
-  let html = escapeHtml(code);
-  // Keywords
-  const keywords = [
-    "const",
-    "let",
-    "var",
-    "function",
-    "return",
-    "import",
-    "from",
-    "export",
-    "default",
-    "async",
-    "await",
-    "if",
-    "else",
-    "for",
-    "while",
-    "try",
-    "catch",
-    "new",
-    "this",
-    "class",
-    "extends",
-    "super",
-    "static",
-    "typeof",
-    "instanceof",
-    "true",
-    "false",
-    "null",
-    "undefined",
-  ];
-  keywords.forEach((kw) => {
-    html = html.replace(
-      new RegExp(`\\b${kw}\\b`, "g"),
-      `<span style="color:#ff7b72">${kw}</span>`,
-    );
-  });
-  // Functions / Hooks
-  html = html.replace(
-    /\b(use[A-Z][a-zA-Z]+|[A-Z][a-zA-Z]+)\b/g,
-    '<span style="color:#d2a8ff">$1</span>',
-  );
-  // Strings
-  html = html.replace(
-    /(&quot;.*?&quot;|&#039;.*?&#039;|`.*?`)/g,
-    '<span style="color:#a5d6ff">$1</span>',
-  );
-  // Numbers
-  html = html.replace(/\b(\d+)\b/g, '<span style="color:#79c0ff">$1</span>');
-  // Comments
-  html = html.replace(
-    /(\/\/.*$)/gm,
-    '<span style="color:#8b949e;font-style:italic">$1</span>',
-  );
-  // JSX tags
-  html = html.replace(
-    /(&lt;\/?)([a-zA-Z][a-zA-Z0-9]*)/g,
-    '$1<span style="color:#7ee787">$2</span>',
-  );
-  return html;
-}
-
-function generateRaySoStyleHtml(title: string, code: string): string {
-  const highlighted = highlightCode(code);
-  return `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<style>
-* { margin:0; padding:0; box-sizing:border-box; }
-body {
-  width: 1200px;
-  background: #0f0f0f;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  padding: 60px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.card {
-  background: #181818;
-  border-radius: 24px;
-  overflow: hidden;
-  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-  width: 100%;
-}
-.card-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 20px 24px;
-  background: #1e1e1e;
-  border-bottom: 1px solid #2a2a2a;
-}
-.dot { width: 14px; height: 14px; border-radius: 50%; }
-.dot-red { background: #ff5f57; }
-.dot-yellow { background: #febc2e; }
-.dot-green { background: #28c840; }
-.title-bar {
-  margin-left: 12px;
-  font-size: 15px;
-  color: #888;
-  font-family: 'SF Mono', Monaco, monospace;
-}
-.code-area {
-  padding: 32px 36px;
-  background: #0d1117;
-}
-pre {
-  font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', Consolas, monospace;
-  font-size: 20px;
-  line-height: 1.7;
-  color: #c9d1d9;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-.footer {
-  margin-top: 30px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  padding: 0 10px;
-}
-.brand {
-  font-size: 16px;
-  color: #666;
-  font-weight: 500;
-  letter-spacing: 2px;
-}
-.topic {
-  font-size: 16px;
-  color: #58a6ff;
-  font-weight: 500;
-}
-</style>
-</head>
-<body>
-<div class="card">
-  <div class="card-header">
-    <div class="dot dot-red"></div>
-    <div class="dot dot-yellow"></div>
-    <div class="dot dot-green"></div>
-    <div class="title-bar">${escapeHtml(title.slice(0, 40))}</div>
-  </div>
-  <div class="code-area">
-    <pre><code>${highlighted}</code></pre>
-  </div>
-</div>
-<div class="footer">
-  <div class="topic">#React #JavaScript</div>
-  <div class="brand">POSTERAGENT</div>
-</div>
-</body>
-</html>`;
-}
-
-async function generateRaySoStyleImage(
-  title: string,
+/**
+ * Generate a beautiful code snippet image using carbon.now.sh
+ * Opens carbon in a headless browser, pastes the code,
+ * clicks Export → PNG, and captures the downloaded image
+ */
+async function generateCarbonImage(
   code: string,
   outputPath: string,
 ): Promise<boolean> {
-  console.log("🚀 Launching Chromium for fast local render...");
+  console.log("🚀 Launching Chromium for carbon.now.sh...");
   let browser;
   try {
     browser = await chromium.launch({
@@ -189,31 +24,72 @@ async function generateRaySoStyleImage(
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
         "--disable-gpu",
+        "--disable-web-security",
+        "--disable-features=IsolateOrigins,site-per-process",
       ],
     });
-    console.log("✅ Chromium launched");
+    console.log("✅ Chromium launched successfully");
   } catch (launchError: any) {
-    console.error("❌ Chromium launch failed:", launchError.message);
+    console.error("❌ Failed to launch Chromium:", launchError.message);
     throw launchError;
   }
 
   try {
     const page = await browser.newPage({
-      viewport: { width: 1200, height: 800 },
-      deviceScaleFactor: 2,
+      viewport: { width: 1920, height: 1080 },
     });
-    console.log("📄 Page created (1200x800 @ 2x)");
+    console.log("📄 New page created");
 
-    const html = generateRaySoStyleHtml(title, code);
-    await page.setContent(html, { waitUntil: "networkidle" });
-    await page.waitForTimeout(500);
+    // Navigate to carbon.now.sh with Night Owl theme, no line numbers, 2x export
+    const carbonUrl =
+      "https://carbon.now.sh/?bg=rgba(171,184,195,1)&t=night-owl&wt=none&l=auto&width=680&ds=true&dsyoff=20px&dsblur=68px&wc=true&wa=true&pv=56px&ph=56px&ln=false&fl=1&fm=Hack&fs=14px&lh=133%25&si=false&es=2x&wm=false";
+    console.log("🌐 Navigating to carbon.now.sh...");
+    await page.goto(carbonUrl, { waitUntil: "networkidle" });
+    console.log("✅ carbon.now.sh loaded");
+    await page.waitForTimeout(3000);
 
-    console.log("📸 Taking screenshot...");
-    await page.screenshot({ path: outputPath, type: "png", fullPage: true });
-    console.log("✅ Screenshot saved to", outputPath);
+    // Find and fill the code editor
+    console.log("⌨️ Looking for code editor...");
+    const editor = page.locator('textarea, [contenteditable="true"]').first();
+    await editor.waitFor({ state: "visible" });
+    console.log("✅ Code editor found");
+
+    // Clear existing content and paste new code
+    await editor.click();
+    await page.keyboard.press("Control+a");
+    await page.keyboard.press("Delete");
+    await editor.fill(code);
+    console.log("✅ Code pasted into carbon");
+    await page.waitForTimeout(2000);
+
+    // Click the Export button (the download/export icon button)
+    console.log("🖼️ Clicking Export button...");
+    const exportBtn = page
+      .locator('button:has-text("Export"), button[aria-label*="export"], button[aria-label*="download"]')
+      .first();
+    await exportBtn.waitFor({ state: "visible" });
+    await exportBtn.click();
+    console.log("✅ Export dropdown opened");
+    await page.waitForTimeout(1000);
+
+    // Click PNG option
+    console.log("💾 Selecting PNG export...");
+    const pngOption = page.locator('button:has-text("PNG")').first();
+    await pngOption.waitFor({ state: "visible" });
+
+    // Handle the download
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      pngOption.click(),
+    ]);
+
+    await download.saveAs(outputPath);
+    console.log("✅ carbon PNG exported to", outputPath);
+
     return true;
   } catch (error: any) {
-    console.error("❌ Image generation error:", error.message);
+    console.error("❌ Error during carbon image generation:", error.message);
+    console.error("Stack:", error.stack);
     throw error;
   } finally {
     await browser.close();
@@ -224,14 +100,15 @@ async function generateRaySoStyleImage(
 export async function generateImageNode(
   state: StateType,
 ): Promise<Partial<StateType>> {
-  console.log("--- 🎨 EXECUTING IMAGE GENERATION NODE (Ray.so Style) ---");
+  console.log("--- 🎨 EXECUTING IMAGE GENERATION NODE (carbon.now.sh) ---");
 
   const codeExample = state.post?.codeExample;
-  const postTitle = state.post?.postTitle;
-
   if (!codeExample || codeExample.trim() === "") {
     console.log("⚠️ No codeExample found. Skipping image generation.");
-    return { imageUrl: "", status: "IMAGE_SKIPPED_NO_CODE" };
+    return {
+      imageUrl: "",
+      status: "IMAGE_SKIPPED_NO_CODE",
+    };
   }
 
   if (!existsSync(IMAGES_DIR)) {
@@ -239,14 +116,47 @@ export async function generateImageNode(
   }
 
   const timestamp = Date.now();
-  const safeTitle = postTitle
-    ? postTitle
+  const safeTitle = state.post.postTitle
+    ? state.post.postTitle
         .toLowerCase()
         .replace(/[^a-z0-9]/g, "_")
         .slice(0, 20)
     : "post";
   const fileName = `snippet_${safeTitle}_${timestamp}.png`;
   const filePath = join(IMAGES_DIR, fileName);
+
+  let attempts = 0;
+  const maxAttempts = 2;
+  let success = false;
+
+  while (attempts < maxAttempts && !success) {
+    attempts++;
+    try {
+      console.log(
+        `🖼️ carbon image generation attempt ${attempts}/${maxAttempts}...`,
+      );
+      success = await generateCarbonImage(codeExample, filePath);
+      if (success) {
+        console.log(`✅ carbon image captured: ${filePath}`);
+      }
+    } catch (error: any) {
+      console.error(`❌ carbon attempt ${attempts} failed:`, error.message);
+      if (attempts >= maxAttempts) {
+        return {
+          imageUrl: "",
+          status: "IMAGE_FAILED",
+          error: `carbon image generation failed: ${error.message}`,
+        };
+      }
+    }
+  }
+
+  return {
+    imageUrl: filePath,
+    status: "IMAGE_GENERATED",
+    error: null,
+  };
+}
 
   let attempts = 0;
   const maxAttempts = 2;
