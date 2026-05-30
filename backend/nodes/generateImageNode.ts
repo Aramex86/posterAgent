@@ -65,7 +65,9 @@ async function generateCarbonImage(
     // Click the Export button (the download/export icon button)
     console.log("🖼️ Clicking Export button...");
     const exportBtn = page
-      .locator('button:has-text("Export"), button[aria-label*="export"], button[aria-label*="download"]')
+      .locator(
+        'button:has-text("Export"), button[aria-label*="export"], button[aria-label*="download"]',
+      )
       .first();
     await exportBtn.waitFor({ state: "visible" });
     await exportBtn.click();
@@ -146,41 +148,6 @@ export async function generateImageNode(
           imageUrl: "",
           status: "IMAGE_FAILED",
           error: `carbon image generation failed: ${error.message}`,
-        };
-      }
-    }
-  }
-
-  return {
-    imageUrl: filePath,
-    status: "IMAGE_GENERATED",
-    error: null,
-  };
-}
-
-  let attempts = 0;
-  const maxAttempts = 2;
-  let success = false;
-
-  while (attempts < maxAttempts && !success) {
-    attempts++;
-    try {
-      console.log(`🖼️ Image generation attempt ${attempts}/${maxAttempts}...`);
-      success = await generateRaySoStyleImage(
-        postTitle || "React Code Snippet",
-        codeExample,
-        filePath,
-      );
-      if (success) {
-        console.log(`✅ Image captured: ${filePath}`);
-      }
-    } catch (error: any) {
-      console.error(`❌ Attempt ${attempts} failed:`, error.message);
-      if (attempts >= maxAttempts) {
-        return {
-          imageUrl: "",
-          status: "IMAGE_FAILED",
-          error: `Image generation failed: ${error.message}`,
         };
       }
     }
