@@ -21,7 +21,7 @@ await fastify.register(fastifySSE);
 
 await fastify.register(app);
 
-fastify.listen({ port: Number(env.PORT) }, (err, address) => {
+fastify.listen({ port: Number(env.PORT), host: '0.0.0.0' }, (err, address) => {
   if (err) {
     fastify.log.error(err);
     process.exit(1);
