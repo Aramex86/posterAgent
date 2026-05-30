@@ -406,7 +406,10 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
   console.log("🤖 Telegram webhook endpoint registered at", webhookPath);
 
   // Set webhook URL on Telegram (only in production)
-  if (process.env.NODE_ENV === "production" || process.env.RAILWAY_ENVIRONMENT) {
+  if (
+    process.env.NODE_ENV === "production" ||
+    process.env.RAILWAY_ENVIRONMENT
+  ) {
     const webhookUrl = `https://posteragent-backend-production.up.railway.app${webhookPath}`;
     try {
       await bot.api.setWebhook(webhookUrl);
@@ -415,7 +418,6 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
       console.error("❌ Failed to set webhook:", webhookError.message);
     }
   }
-}
 }
 
 function escapeMarkdown(text: string): string {
