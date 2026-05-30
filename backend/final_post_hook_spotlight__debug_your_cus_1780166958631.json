@@ -1,0 +1,17 @@
+{
+  "postTitle": "Hook Spotlight: Debug Your Custom Hooks with useDebugValue 🚀",
+  "postContent": "Hook debugging made simple.\nuseDebugValue attaches a label to a custom Hook in React DevTools.\nIt doesn’t affect what your component renders.\nYou pass a value from your hook as the first argument.\nOptionally, pass a formatter as the second argument.\nThe formatter controls how the value looks in DevTools.\nThis makes complex hooks easier to understand when you inspect components.\n",
+  "codeExample": "import { useDebugValue, useEffect, useState } from 'react';\n\nexport function useOnlineStatus() {\n  const [online, setOnline] = useState(false);\n\n  useEffect(() => {\n    const update = () => setOnline(navigator.onLine);\n    window.addEventListener('online', update);\n    window.addEventListener('offline', update);\n    update();\n    return () => {\n      window.removeEventListener('online', update);\n      window.removeEventListener('offline', update);\n    };\n  }, []);\n\n  // Attach a readable label in DevTools\n  useDebugValue(online, v => (v ? 'Online' : 'Offline'));\n\n  return online;\n}\n\nfunction StatusLabel() {\n  const online = useOnlineStatus();\n  return <span>{online ? 'Online' : 'Offline'}</span>;\n}",
+  "tehnicalChallange": {
+    "title": "Challenge: Add a formatter to your hook and verify DevTools label",
+    "description": "Create a small hook that uses useDebugValue with a formatter function. Integrate it into a component and confirm the DevTools label shows the formatted result. Keep rendering unaffected.",
+    "difficulty": "Easy"
+  },
+  "hashtags": [
+    "#React",
+    "#ReactDevTools",
+    "#Hooks",
+    "#Frontend",
+    "#WebDev"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "postTitle": "⚡️ useMemo: Don’t Recompute Everything in React",
+  "postContent": "⚡️ Hook: useMemo caches the result of a pure calculation. It prevents expensive work from re-running on every render. 🧠 It re-computes only when its dependencies change. Place it at the top level of your component. Don’t put it inside loops or conditionals. 🔧 Use it for expensive filters, sorts, or deriving data from large lists. Pattern to remember: const result = useMemo(() => heavyCompute(input), [input]).",
+  "codeExample": "import React, { useMemo } from 'react';\n\nfunction TodoList({ todos, tab }) {\n  const visibleTodos = useMemo(() => filterTodos(todos, tab), [todos, tab]);\n\n  return (\n    <ul>\n      {visibleTodos.map(todo => (\n        <li key={todo.id}>{todo.text}</li>\n      ))}\n    </ul>\n  );\n}\n\n// Example helper (pure function)\nfunction filterTodos(todos, tab) {\n  if (tab === 'all') return todos;\n  return todos.filter(t => t.status === tab);\n}\n",
+  "tehnicalChallange": {
+    "title": "Challenge: Refactor a component to use useMemo",
+    "description": "Take a component that derives a list from props with a heavy computation. Refactor to use useMemo and ensure the dependencies are correct so it only recomputes when inputs change.",
+    "difficulty": "Medium"
+  },
+  "hashtags": [
+    "#React",
+    "#useMemo",
+    "#Performance",
+    "#Frontend",
+    "#JavaScript"
+  ]
+}

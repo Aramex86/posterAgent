@@ -1,0 +1,96 @@
+import { START, END, StateGraph, MemorySaver } from "@langchain/langgraph";
+import { GraphState } from "./state";
+import { scrapingWebNode } from "./nodes/scrapingWeb_node";
+import { summarizeNode } from "./nodes/summarize_node";
+import { generateContentNode } from "./nodes/generate_node";
+// import { SqliteSaver } from "@langchain/langgraph-checkpoint-sqlite";
+import { rewriteNode } from "./nodes/rewrite_node";
+import { approveNode } from "./nodes/approveNode";
+import { saveNode } from "./nodes/saveNode";
+import { generateImageNode } from "./nodes/generateImageNode";
+import { uploadImageNode } from "./nodes/uploadImageNode";
+import { telegramNotifyNode } from "./nodes/telegramNotifyNode";
+import { approvePostingNode } from "./nodes/approvePostingNode";
+import { postToLinkedInNode } from "./nodes/postToLinkedInNode";
+
+// const checkpointer = SqliteSaver.fromConnString("./checkpoints.sqlite");
+const checkpointer = new MemorySaver();
+
+const workflow = new StateGraph(GraphState)
+  .addNode("scrape", scrapingWebNode)
+  .addNode("summarize", summarizeNode)
+  .addNode("generate_content", generateContentNode)
+  .addNode("approve", approveNode)
+  .addNode("rewrite", rewriteNode)
+  .addNode("save", saveNode)
+  .addNode("generate_image", generateImageNode)
+  .addNode("upload_image", uploadImageNode)
+  .addNode("telegram_notify", telegramNotifyNode)
+  .addNode("approve_posting", approvePostingNode)
+  .addNode("post_to_linkedin", postToLinkedInNode);
+
+workflow.addEdge(START, "scrape");
+
+workflow.addConditionalEdges(
+  "scrape",
+  (state) => {
+    return state.error ? "fail" : "continue";
+  },
+  {
+    fail: END,
+    continue: "summarize",
+  },
+);
+
+workflow.addConditionalEdges(
+  "summarize",
+  (state) => {
+    return state.error ? "fail" : "continue";
+  },
+  {
+    fail: END,
+    continue: "generate_content",
+  },
+);
+
+workflow.addEdge("generate_content", "approve");
+
+workflow.addConditionalEdges(
+  "approve",
+  (state) => {
+    if (state.error) return "fail";
+    return state.isApproved ? "save" : "rewrite";
+  },
+  {
+    save: "save",
+    rewrite: "rewrite",
+    fail: END,
+  },
+);
+
+workflow.addEdge("rewrite", "generate_content");
+
+// After save, continue to image generation and posting pipeline
+workflow.addEdge("save", "generate_image");
+workflow.addEdge("generate_image", "upload_image");
+workflow.addEdge("upload_image", "telegram_notify");
+workflow.addEdge("telegram_notify", "approve_posting");
+
+workflow.addConditionalEdges(
+  "approve_posting",
+  (state) => {
+    if (state.error) return "fail";
+    return state.isPostingApproved ? "post" : "skip";
+  },
+  {
+    post: "post_to_linkedin",
+    skip: END,
+    fail: END,
+  },
+);
+
+workflow.addEdge("post_to_linkedin", END);
+
+export const appGraph = workflow.compile({
+  checkpointer,
+});

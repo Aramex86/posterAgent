@@ -1,0 +1,19 @@
+{
+  "postTitle": "Stop Recomputing: How useMemo Keeps Your React UI Fast",
+  "postContent": "Memoize the result of a pure calculation between renders.\nIt avoids expensive recalculations when dependencies haven’t changed.\nIt’s a cache for a value, not a UI component.\nPut it at the top level of a component to cache derived data.\nExample scenario: filtering a long list.\nThe common pattern: const visibleTodos = useMemo(() => filterTodos(todos, tab), [todos, tab]);\nUse it for expensive work only. It won’t speed up every render by itself.",
+  "codeExample": "import React, { useMemo, useState } from 'react';\n\nfunction TodoList({ todos }) {\n  const [tab, setTab] = useState('all');\n\n  const visibleTodos = useMemo(\n    () => todos.filter(t =>\n      tab === 'all' ? true : (tab === 'active' ? !t.completed : t.completed)\n    ),\n    [todos, tab]\n  );\n\n  return (\n    <div>\n      <button onClick={() => setTab('all')}>All</button>\n      <button onClick={() => setTab('active')}>Active</button>\n      <button onClick={() => setTab('completed')}>Completed</button>\n\n      <ul>\n        {visibleTodos.map(t => (\n          <li key={t.id}>{t.label}</li>\n        ))}\n      </ul>\n    </div>\n  );\n}",
+  "tehnicalChallange": {
+    "title": "Memoize a filtered list with useMemo",
+    "description": "Build a component that receives a list of items and a filter (tab). Use useMemo to compute the filtered list so it only recalculates when the list or tab changes.",
+    "difficulty": "Easy"
+  },
+  "hashtags": [
+    "React",
+    "useMemo",
+    "Performance",
+    "ReactHooks",
+    "Frontend",
+    "JavaScript",
+    "WebDev"
+  ]
+}

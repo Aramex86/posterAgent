@@ -1,0 +1,18 @@
+{
+  "postTitle": "Don't Recompute Everything: Master useMemo in 60 Seconds",
+  "postContent": "Hook: Don’t recompute everything. useMemo caches the result of expensive calculations between renders. If inputs don’t change, React will reuse the previous value.\n\nPlain terms: You give React a function and a list of dependencies. If any dependency changes, React recomputes. If not, it reuses the cached result.\n\nWhy it helps: It’s a small optimization that can prevent costly work when rendering large lists or heavy calculations.\n\nWhen to use: UseMemo makes sense for expensive calculations or when you pass derived values to child components that rely on referential stability.",
+  "codeExample": "import { useMemo } from 'react';\n\nfunction TodoList({ todos, tab }) {\n  const visibleTodos = useMemo(() => filterTodos(todos, tab), [todos, tab]);\n  return (\n    <ul>\n      {visibleTodos.map(todo => (\n        <li key={todo.id}>{todo.title}</li>\n      ))}\n    </ul>\n  );\n}\n\nfunction filterTodos(todos, tab) {\n  // Simulated expensive operation\n  return tab === 'all' ? todos : todos.filter(t => t.status === tab);\n}",
+  "tehnicalChallange": {
+    "title": "Challenge: Measure the impact of useMemo",
+    "description": "Create a component rendering a large list and applying an expensive filter. Build two versions: one using useMemo for the derived data and one without. Compare render counts and timing. Practice choosing the right dependencies to avoid stale or unnecessary recomputations.",
+    "difficulty": "Medium"
+  },
+  "hashtags": [
+    "#React",
+    "#useMemo",
+    "#Performance",
+    "#Frontend",
+    "#JavaScript",
+    "#WebDev"
+  ]
+}
