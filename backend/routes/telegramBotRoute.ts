@@ -412,6 +412,13 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
   ) {
     const webhookUrl = `https://posteragent-backend-production.up.railway.app${webhookPath}`;
     try {
+      // Delete any existing webhook first to avoid conflicts
+      await bot.api.deleteWebhook({ drop_pending_updates: true });
+      console.log("🗑️ Old webhook deleted");
+      
+      // Wait a bit for the old instance to stop
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
       await bot.api.setWebhook(webhookUrl);
       console.log("✅ Telegram webhook set to:", webhookUrl);
     } catch (webhookError: any) {
