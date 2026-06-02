@@ -17,6 +17,9 @@ const config = defineConfig({
   optimizeDeps: {
     exclude: ['@langchain/react'],
   },
+  preview: {
+    allowedHosts: ['.railway.app', 'localhost'],
+  },
 })
 
 export default config
