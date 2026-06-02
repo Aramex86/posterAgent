@@ -24,9 +24,15 @@ CRITICAL INSTRUCTIONS:
 
   // 2. Dynamic runtime context isolated using XML-style data tags
   let userPrompt = `
+<source_url>
+${state.url}
+</source_url>
+
 <source_summary>
 ${state.summary}
 </source_summary>
+
+CRITICAL: The codeExample MUST be a practical, real-world example of the EXACT API/hook/concept from the source URL. Do NOT use generic or unrelated code examples.
   `.trim();
 
   if (isRewriteRun) {

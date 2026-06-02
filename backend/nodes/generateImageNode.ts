@@ -6,15 +6,15 @@ import { join } from "node:path";
 const IMAGES_DIR = join(process.cwd(), "generated-images");
 
 /**
- * Generate a beautiful code snippet image using carbon.now.sh
- * Opens carbon in a headless browser, pastes the code,
- * clicks Export → PNG, and captures the downloaded image
+ * Generate a beautiful code snippet image using ray.so
+ * Encodes code in the URL, navigates directly, clicks Export → PNG,
+ * and intercepts the downloaded image
  */
-async function generateCarbonImage(
+async function generateRaySoImage(
   code: string,
   outputPath: string,
 ): Promise<boolean> {
-  console.log("🚀 Launching Chromium for carbon.now.sh...");
+  console.log("🚀 Launching Chromium for ray.so export...");
   let browser;
   try {
     browser = await chromium.launch({
@@ -24,8 +24,6 @@ async function generateCarbonImage(
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
         "--disable-gpu",
-        "--disable-web-security",
-        "--disable-features=IsolateOrigins,site-per-process",
       ],
     });
     console.log("✅ Chromium launched successfully");
@@ -40,58 +38,58 @@ async function generateCarbonImage(
     });
     console.log("📄 New page created");
 
-    // Navigate to carbon.now.sh with Night Owl theme, no line numbers, 2x export
-    const carbonUrl =
-      "https://carbon.now.sh/?bg=rgba(171,184,195,1)&t=night-owl&wt=none&l=auto&width=680&ds=true&dsyoff=20px&dsblur=68px&wc=true&wa=true&pv=56px&ph=56px&ln=false&fl=1&fm=Hack&fs=14px&lh=133%25&si=false&es=2x&wm=false";
-    console.log("🌐 Navigating to carbon.now.sh...");
-    await page.goto(carbonUrl, { waitUntil: "networkidle" });
-    console.log("✅ carbon.now.sh loaded");
+    // Base64 encode the code and construct ray.so URL directly
+    const encodedCode = Buffer.from(code).toString("base64");
+    const raySoUrl = `https://ray.so/#width=750&code=${encodeURIComponent(encodedCode)}&language=javascript&background=true&darkMode=true&lineNumbers=true&padding=64&theme=openai`;
+
+    console.log("🌐 Navigating to ray.so with pre-encoded code...");
+    await page.goto(raySoUrl, { waitUntil: "networkidle" });
+    console.log("✅ ray.so loaded");
     await page.waitForTimeout(3000);
 
-    // Find and fill the code editor
-    console.log("⌨️ Looking for code editor...");
-    const editor = page.locator('textarea, [contenteditable="true"]').first();
-    await editor.waitFor({ state: "visible" });
-    console.log("✅ Code editor found");
+    // Click "Export" button and intercept the download
+    console.log("🖼️ Clicking Export button and intercepting download...");
 
-    // Clear existing content and paste new code
-    await editor.click();
-    await page.keyboard.press("Control+a");
-    await page.keyboard.press("Delete");
-    await editor.fill(code);
-    console.log("✅ Code pasted into carbon");
+    // Wait for UI to fully render
     await page.waitForTimeout(2000);
 
-    // Click the Export button (the download/export icon button)
-    console.log("🖼️ Clicking Export button...");
-    const exportBtn = page
-      .locator(
-        'button:has-text("Export"), button[aria-label*="export"], button[aria-label*="download"]',
-      )
-      .first();
-    await exportBtn.waitFor({ state: "visible" });
-    await exportBtn.click();
-    console.log("✅ Export dropdown opened");
-    await page.waitForTimeout(1000);
+    // Find the Export button
+    const exportSelectors = [
+      'button:has-text("Export")',
+      'button:has-text("PNG")',
+      'button[aria-label*="export" i]',
+      'button[aria-label*="download" i]',
+    ];
 
-    // Click PNG option
-    console.log("💾 Selecting PNG export...");
-    const pngOption = page.locator('button:has-text("PNG")').first();
-    await pngOption.waitFor({ state: "visible" });
+    let exportBtn = null;
+    for (const sel of exportSelectors) {
+      try {
+        const el = page.locator(sel).first();
+        await el.waitFor({ state: "visible", timeout: 3000 });
+        exportBtn = el;
+        console.log(`✅ Found Export button with selector: ${sel}`);
+        break;
+      } catch {
+        console.log(`⚠️ Selector failed: ${sel}`);
+      }
+    }
 
-    // Handle the download
+    if (!exportBtn) {
+      throw new Error("Could not find Export button");
+    }
+
     const [download] = await Promise.all([
-      page.waitForEvent("download"),
-      pngOption.click(),
+      page.waitForEvent("download", { timeout: 30000 }),
+      exportBtn.click(),
     ]);
 
+    console.log("📥 Download started:", download.suggestedFilename());
     await download.saveAs(outputPath);
-    console.log("✅ carbon PNG exported to", outputPath);
+    console.log("✅ ray.so PNG exported to", outputPath);
 
     return true;
   } catch (error: any) {
-    console.error("❌ Error during carbon image generation:", error.message);
-    console.error("Stack:", error.stack);
+    console.error("❌ Error during ray.so export:", error.message);
     throw error;
   } finally {
     await browser.close();
@@ -102,7 +100,7 @@ async function generateCarbonImage(
 export async function generateImageNode(
   state: StateType,
 ): Promise<Partial<StateType>> {
-  console.log("--- 🎨 EXECUTING IMAGE GENERATION NODE (carbon.now.sh) ---");
+  console.log("--- 🎨 EXECUTING IMAGE GENERATION NODE (ray.so URL) ---");
 
   const codeExample = state.post?.codeExample;
   if (!codeExample || codeExample.trim() === "") {
@@ -135,19 +133,19 @@ export async function generateImageNode(
     attempts++;
     try {
       console.log(
-        `🖼️ carbon image generation attempt ${attempts}/${maxAttempts}...`,
+        `🖼️ ray.so image generation attempt ${attempts}/${maxAttempts}...`,
       );
-      success = await generateCarbonImage(codeExample, filePath);
+      success = await generateRaySoImage(codeExample, filePath);
       if (success) {
-        console.log(`✅ carbon image captured: ${filePath}`);
+        console.log(`✅ ray.so image captured: ${filePath}`);
       }
     } catch (error: any) {
-      console.error(`❌ carbon attempt ${attempts} failed:`, error.message);
+      console.error(`❌ ray.so attempt ${attempts} failed:`, error.message);
       if (attempts >= maxAttempts) {
         return {
           imageUrl: "",
           status: "IMAGE_FAILED",
-          error: `carbon image generation failed: ${error.message}`,
+          error: `ray.so image generation failed: ${error.message}`,
         };
       }
     }
