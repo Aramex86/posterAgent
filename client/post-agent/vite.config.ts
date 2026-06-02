@@ -18,11 +18,7 @@ const config = defineConfig({
     exclude: ['@langchain/react'],
   },
   preview: {
-    allowedHosts: [
-      'posteragent-production.up.railway.app',
-      '.railway.app',
-      'localhost',
-    ],
+    allowedHosts: true,
   },
 })
 
