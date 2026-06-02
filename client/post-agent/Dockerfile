@@ -20,10 +20,6 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Copy nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Create startup script to handle Railway's PORT env var
-COPY docker-entrypoint.sh /start.sh
-RUN chmod +x /start.sh
-
 EXPOSE 80
 
-ENTRYPOINT ["/start.sh"]
+CMD ["nginx", "-g", "daemon off;"]
