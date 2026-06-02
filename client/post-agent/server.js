@@ -1,5 +1,4 @@
 import { createServer } from 'node:http'
-import handler from './dist/server/server.js'
 
 const PORT = 80
 
@@ -18,7 +17,12 @@ const server = createServer(async (req, res) => {
   })
 
   try {
-    const response = await handler.default.fetch(request)
+    const mod = await import('./dist/server/server.js')
+    const handler = mod.default || mod
+    console.log('Handler type:', typeof handler)
+    console.log('Handler keys:', Object.keys(handler))
+
+    const response = await handler.fetch(request)
     res.statusCode = response.status
     res.statusMessage = response.statusText
     response.headers.forEach((value, key) => {
@@ -35,9 +39,10 @@ const server = createServer(async (req, res) => {
     }
     res.end()
   } catch (error) {
-    console.error('Server error:', error)
+    console.error('Server error:', error.message)
+    console.error('Stack:', error.stack)
     res.statusCode = 500
-    res.end('Internal Server Error')
+    res.end('Internal Server Error: ' + error.message)
   }
 })
 
