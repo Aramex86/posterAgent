@@ -92,90 +92,21 @@ async function getZernioLinkedInAccountId(): Promise<string | null> {
   }
 }
 
-async function getZernioPresignedUrl(
-  fileName: string,
-  fileType: string,
-): Promise<{ uploadUrl: string; publicUrl: string } | null> {
-  try {
-    const res = await fetch(`${ZERNIO_BASE_URL}/media/presign`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${env.ZERNIO_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ fileName, fileType }),
-    });
-
-    if (!res.ok) {
-      console.warn("Zernio presign failed:", res.status);
-      return null;
-    }
-
-    const data = await res.json();
-    return {
-      uploadUrl: data.uploadUrl,
-      publicUrl: data.publicUrl,
-    };
-  } catch (err: any) {
-    console.warn("Failed to get presigned URL:", err.message);
-    return null;
-  }
-}
-
-async function uploadImageToZernio(imageUrl: string): Promise<string | null> {
-  console.log("📸 Uploading image to Zernio...");
-
-  try {
-    // Download image from Cloudinary
-    const imageRes = await fetch(imageUrl);
-    if (!imageRes.ok) {
-      console.warn("Failed to download image:", imageRes.status);
-      return null;
-    }
-
-    const contentType = imageRes.headers.get("content-type") || "image/jpeg";
-    const imageBuffer = Buffer.from(await imageRes.arrayBuffer());
-
-    // Extract filename from URL or use default
-    const urlPath = new URL(imageUrl).pathname;
-    const fileName = urlPath.split("/").pop() || "image.jpg";
-
-    // Get presigned URL
-    const presigned = await getZernioPresignedUrl(fileName, contentType);
-    if (!presigned) return null;
-
-    // Upload to Zernio storage
-    const uploadRes = await fetch(presigned.uploadUrl, {
-      method: "PUT",
-      headers: { "Content-Type": contentType },
-      body: imageBuffer,
-    });
-
-    if (!uploadRes.ok) {
-      console.warn("Zernio upload failed:", uploadRes.status);
-      return null;
-    }
-
-    console.log("✅ Image uploaded to Zernio:", presigned.publicUrl);
-    return presigned.publicUrl;
-  } catch (err: any) {
-    console.warn("Failed to upload image to Zernio:", err.message);
-    return null;
-  }
-}
-
 async function publishViaZernio(
   state: StateType,
   formattedText: string,
   accountId: string,
 ): Promise<Partial<StateType>> {
+  console.log("📸 state.imageUrl:", state.imageUrl || "(empty)");
+
   const mediaItems = [];
 
+  // Zernio can download the image directly from the URL
   if (state.imageUrl) {
-    const zernioImageUrl = await uploadImageToZernio(state.imageUrl);
-    if (zernioImageUrl) {
-      mediaItems.push({ url: zernioImageUrl, type: "image" });
-    }
+    console.log("📸 Adding image to post via direct URL:", state.imageUrl);
+    mediaItems.push({ url: state.imageUrl, type: "image" });
+  } else {
+    console.log("📸 No imageUrl in state, skipping image");
   }
 
   const postBody: any = {
@@ -187,6 +118,8 @@ async function publishViaZernio(
   if (mediaItems.length > 0) {
     postBody.mediaItems = mediaItems;
   }
+
+  console.log("📤 Zernio post body:", JSON.stringify(postBody, null, 2));
 
   const response = await fetch(`${ZERNIO_BASE_URL}/posts`, {
     method: "POST",
