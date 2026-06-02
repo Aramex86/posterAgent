@@ -1,5 +1,5 @@
 import { createServer } from 'node:http'
-import { readFileSync, existsSync } from 'node:fs'
+import { readFileSync, existsSync, statSync } from 'node:fs'
 import { join, extname } from 'node:path'
 
 const PORT = 80
@@ -26,7 +26,7 @@ function serveStatic(req, res) {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`)
   const filePath = join(STATIC_DIR, url.pathname.slice(1))
 
-  if (existsSync(filePath)) {
+  if (existsSync(filePath) && statSync(filePath).isFile()) {
     const ext = extname(filePath)
     const contentType = MIME_TYPES[ext] || 'application/octet-stream'
     const content = readFileSync(filePath)
