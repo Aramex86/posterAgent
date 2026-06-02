@@ -11,16 +11,17 @@ RUN npm install
 COPY . .
 RUN npm run build
 
-# Production stage - serve static files with vite preview
+# Production stage - serve static files with serve
 FROM node:22-alpine
 
 WORKDIR /app
 
-# Copy built files and node_modules
+# Copy built files
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package*.json ./
+
+# Install serve globally
+RUN npm install -g serve
 
 EXPOSE 80
 
-CMD ["npx", "vite", "preview", "--port", "80", "--host", "0.0.0.0"]
+CMD ["serve", "-s", "dist/client", "-l", "80"]

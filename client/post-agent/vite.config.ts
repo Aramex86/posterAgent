@@ -17,9 +17,6 @@ const config = defineConfig({
   optimizeDeps: {
     exclude: ['@langchain/react'],
   },
-  preview: {
-    allowedHosts: true,
-  },
 })
 
 export default config
