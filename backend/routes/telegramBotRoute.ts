@@ -20,6 +20,24 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
     );
   });
 
+  // Handle /help command
+  bot.command("help", async (ctx) => {
+    await ctx.reply(
+      "🤖 *PosterAgent Help*\n\n" +
+        "*Commands:*\n" +
+        "/start — Welcome message\n" +
+        "/generate \u003curl\u003e — Generate LinkedIn post from URL\n" +
+        "/help — Show this help\n\n" +
+        "*How it works:*\n" +
+        "1. Send /generate with a URL\n" +
+        "2. Bot scrapes and summarizes the article\n" +
+        "3. AI generates a LinkedIn post with code snippet\n" +
+        "4. You approve or request rewrite\n" +
+        "5. Bot posts to your LinkedIn via Zernio",
+      { parse_mode: "Markdown" },
+    );
+  });
+
   // Handle /generate <url> command
   bot.command("generate", async (ctx) => {
     const messageText = ctx.message?.text || "";
