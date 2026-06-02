@@ -68,7 +68,12 @@ Ensure the new output strictly addresses the issues outlined in <human_feedback>
   }
 
   try {
-    const contentGeneratorAgent = await getModel();
+    // Use powerful Ollama Cloud model for post generation
+    // Options: gemma4:31b-cloud, deepseek-v4-pro-cloud, qwen3-next:80b-cloud
+    const contentGeneratorAgent = await getModel({
+      model: "gemma4:31b-cloud",
+      temperature: 0.7,
+    });
 
     const structuredModel = contentGeneratorAgent.withStructuredOutput(
       OutputSchema,

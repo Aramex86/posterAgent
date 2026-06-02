@@ -22,9 +22,12 @@ export async function discussNode(
   // If user wants to discuss, generate AI response
   if (response.action === "discuss" && response.message) {
     try {
+      // Use a lightweight Ollama Cloud model for discussion
+      // Available cloud models: gemma4:27b-cloud, qwen3.5:9b-cloud, 
+      // deepseek-v3.2-cloud, minimax-m2.5-cloud, glm-4.7-cloud
       const model = await getModel({
-        model: "gpt-oss:120b-cloud",
-        temperature: 1,
+        model: "gemma4:27b-cloud", // Fast and cost-effective for chat
+        temperature: 0.8,
       });
 
       const systemPrompt = `You are a helpful LinkedIn content strategist. The user is discussing a draft post with you.

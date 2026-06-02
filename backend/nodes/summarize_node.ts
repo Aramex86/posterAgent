@@ -27,7 +27,11 @@ export async function summarizeNode(
   Text: ${context}`;
 
   try {
-    const summarizeAgent = await getModel();
+    // Use fast Ollama Cloud model for summarization
+    const summarizeAgent = await getModel({
+      model: "gemma4:9b-cloud", // Small and fast for summarization
+      temperature: 0.3, // Low temperature for factual summary
+    });
 
     const response = await summarizeAgent.invoke(system_message);
 
