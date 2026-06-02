@@ -1,4 +1,5 @@
 import { generatePost, rewritePost } from '#/Features/slice'
+import { API_BASE_URL } from '#/config'
 import type { PostStructure } from '#/Features/types'
 import { ProgressCount } from '#/Shared/atom'
 import { useAgentLogs } from '#/Shared/hooks/useAgentLogs'
@@ -90,7 +91,7 @@ export default function AgentCard() {
 
   const approvePosting = useMutation({
     mutationFn: async ({ approved }: { approved: boolean }) => {
-      const response = await fetch(`http://localhost:5000/telegram/approve`, {
+      const response = await fetch(`${API_BASE_URL}/telegram/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -10,7 +10,21 @@ const fastify = Fastify({
 });
 
 await fastify.register(cors, {
-  origin: "http://localhost:3000",
+  origin: (origin, cb) => {
+    const allowedOrigins = [
+      "http://localhost:3000",
+      /^https:\/\/.*\.railway\.app$/,
+      /^https:\/\/.*\.up\.railway\.app$/,
+    ];
+    
+    if (!origin || allowedOrigins.some(o => 
+      typeof o === 'string' ? o === origin : o.test(origin)
+    )) {
+      cb(null, true);
+      return;
+    }
+    cb(new Error("Not allowed by CORS"), false);
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Cache-Control"],

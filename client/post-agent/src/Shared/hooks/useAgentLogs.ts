@@ -1,4 +1,5 @@
 import { agentApi } from '#/Features/api'
+import { API_BASE_URL } from '#/config'
 import type { PostStructure } from '#/Features/types'
 import { useState, useEffect } from 'react'
 
@@ -15,7 +16,7 @@ export function useAgentLogs(iteration: number, thread_id: string) {
     if (!thread_id || thread_id === '') return
 
     const es = new EventSource(
-      `http://localhost:5000/${agentApi.getUpdates}/${thread_id}`,
+      `${API_BASE_URL}/${agentApi.getUpdates}/${thread_id}`,
     )
 
     es.addEventListener('update', (e) => {
