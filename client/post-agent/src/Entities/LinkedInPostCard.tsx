@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react'
 import { Card, Button, Space, Typography, Tooltip, message } from 'antd'
 import {
-  CopyOutlined,
   CheckOutlined,
+  CopyOutlined,
   LinkedinOutlined,
 } from '@ant-design/icons'
 import Markdown from 'react-markdown'
@@ -88,21 +88,6 @@ function CodeRenderer({ children, className }: CodeRendererProps) {
 }
 
 export default function LinkedInPostCard({ post }: LinkedInPostCardProps) {
-  const [copied, setCopied] = useState(false)
-
-  const handleCopyPost = useCallback(async () => {
-    if (!post) return
-    const linkedInText = `${post.postTitle}\n\n${post.postContent}\n\n${post.hashtags.join(' ')}`
-    try {
-      await navigator.clipboard.writeText(linkedInText)
-      setCopied(true)
-      message.success('Post copied for LinkedIn!')
-      setTimeout(() => setCopied(false), 3000)
-    } catch {
-      message.error('Failed to copy post')
-    }
-  }, [post])
-
   if (!post) return null
 
   return (
@@ -113,16 +98,6 @@ export default function LinkedInPostCard({ post }: LinkedInPostCardProps) {
           <LinkedinOutlined className="text-blue-700" />
           <span className="font-semibold">LinkedIn Post Preview</span>
         </Space>
-      }
-      extra={
-        <Button
-          type="primary"
-          icon={copied ? <CheckOutlined /> : <CopyOutlined />}
-          onClick={handleCopyPost}
-          className="bg-blue-700 hover:bg-blue-800"
-        >
-          {copied ? 'Copied!' : 'Copy for LinkedIn'}
-        </Button>
       }
     >
       <div className="space-y-4">

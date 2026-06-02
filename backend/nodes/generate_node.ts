@@ -20,6 +20,20 @@ CRITICAL INSTRUCTIONS:
 4. Keep the text layout highly scannable (short sentences, clear spacing). Do not use emojis unless explicitly requested.
 5. Create a thought-provoking, brief "Challenge" (practical exercise) at the end to reinforce the material.
 6. Return your final answer strictly structured matching the required output schema.
+7. IMPORTANT: Return ONLY valid JSON. Do not include markdown formatting, code blocks, or any text outside the JSON object.
+
+EXAMPLE OUTPUT FORMAT (use these exact field names):
+{
+  "postTitle": "Stop using Math.random() for your React IDs",
+  "postContent": "If you are generating IDs...\\n\\nReact provides the useId hook...",
+  "codeExample": "import { useId } from 'react';\\n\\nfunction LoginForm() { ... }",
+  "tehnicalChallange": {
+    "title": "Build an accessible form",
+    "description": "Create a custom TextInput component using useId to link labels and inputs.",
+    "difficulty": "Easy"
+  },
+  "hashtags": ["#React", "#useId", "#Accessibility"]
+}
   `.trim();
 
   // 2. Dynamic runtime context isolated using XML-style data tags
@@ -55,8 +69,14 @@ Ensure the new output strictly addresses the issues outlined in <human_feedback>
 
   try {
     const contentGeneratorAgent = await getModel();
-    const structuredModel =
-      contentGeneratorAgent.withStructuredOutput(OutputSchema);
+
+    const structuredModel = contentGeneratorAgent.withStructuredOutput(
+      OutputSchema,
+      {
+        method: "jsonMode",
+        includeRaw: false,
+      },
+    );
 
     const response = await structuredModel.invoke([
       { role: "system", content: system_message },

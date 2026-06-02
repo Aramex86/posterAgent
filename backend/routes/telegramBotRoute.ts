@@ -58,10 +58,8 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
         "⏳ Step 1/6: 🔍 Scraping source content...\n" +
         "⬜ Step 2/6: 📝 Summarizing content\n" +
         "⬜ Step 3/6: ✍️ Generating LinkedIn post\n" +
-        "⬜ Step 4/6: 💾 Saving post\n" +
         "⬜ Step 5/6: 🎨 Generating code snippet image\n" +
-        "⬜ Step 6/6: ☁️ Uploading image to Cloudinary",
-      { parse_mode: "Markdown" },
+        { parse_mode: "Markdown" },
     );
 
     // Helper to update progress message
@@ -74,9 +72,7 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
             `${step >= 1 ? "✅" : "⏳"} Step 1/6: 🔍 Scraping source content\n` +
             `${step >= 2 ? "✅" : "⬜"} Step 2/6: 📝 Summarizing content\n` +
             `${step >= 3 ? "✅" : "⬜"} Step 3/6: ✍️ Generating LinkedIn post\n` +
-            `${step >= 4 ? "✅" : "⬜"} Step 4/6: 💾 Saving post\n` +
             `${step >= 5 ? "✅" : "⬜"} Step 5/6: 🎨 Generating code snippet image\n` +
-            `${step >= 6 ? "✅" : "⬜"} Step 6/6: ☁️ Uploading image to Cloudinary\n\n` +
             `${emoji} ${text}`,
           { parse_mode: "Markdown" },
         );
@@ -124,15 +120,9 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
             } else if (nodeName === "generate_content") {
               currentStep = 3;
               await updateProgress(3, "✍️", "LinkedIn post generated!");
-            } else if (nodeName === "save") {
-              currentStep = 4;
-              await updateProgress(4, "💾", "Post saved!");
             } else if (nodeName === "generate_image") {
               currentStep = 5;
               await updateProgress(5, "🎨", "Code snippet image generated!");
-            } else if (nodeName === "upload_image") {
-              currentStep = 6;
-              await updateProgress(6, "☁️", "Image uploaded to Cloudinary!");
             }
           }
         }
@@ -235,13 +225,17 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
         await ctx.answerCallbackQuery({
           text: "✅ Approved! Generating image...",
         });
-        await ctx.editMessageReplyMarkup({ inline_keyboard: [] });
+        await ctx.editMessageReplyMarkup({
+          reply_markup: { inline_keyboard: [] },
+        });
         await ctx.reply("🎨 Preparing code snippet image...");
       } else {
         await ctx.answerCallbackQuery({
           text: "🔄 Please type your feedback below",
         });
-        await ctx.editMessageReplyMarkup({ inline_keyboard: [] });
+        await ctx.editMessageReplyMarkup({
+          reply_markup: { inline_keyboard: [] },
+        });
         await ctx.reply(
           "📝 *Rewrite Request*\n\n" +
             "Please reply with your feedback (e.g., 'Make it punchier', 'Add a hook', 'Shorter version')",

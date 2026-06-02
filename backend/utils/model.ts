@@ -3,8 +3,9 @@ import { ChatOpenAI } from "@langchain/openai";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatGroq } from "@langchain/groq";
 import { ChatGoogle } from "@langchain/google";
+import { ChatOllama } from "@langchain/ollama";
 
-type Provider = "openai" | "anthropic" | "groq" | "gemini";
+type Provider = "openai" | "anthropic" | "groq" | "gemini" | "ollama";
 
 export async function getModel(provider?: Provider) {
   const p = provider ?? env.DEFAULT_PROVIDER;
@@ -36,6 +37,24 @@ export async function getModel(provider?: Provider) {
         model: env.GEMINI_MODEL,
         apiKey: env.GEMINI_MODEL_API_KEY,
       });
+
+    case "ollama": {
+      const isCloud = env.OLLAMA_BASE_URL?.startsWith("https://");
+      const headers = env.OLLAMA_API_KEY
+        ? { Authorization: `Bearer ${env.OLLAMA_API_KEY}` }
+        : undefined;
+
+      if (isCloud && !env.OLLAMA_API_KEY) {
+        console.warn("⚠️ Ollama Cloud used without OLLAMA_API_KEY");
+      }
+
+      return new ChatOllama({
+        model: env.OLLAMA_MODEL,
+        baseUrl: env.OLLAMA_BASE_URL,
+        headers,
+        format: "json",
+      });
+    }
 
     default:
       throw new Error(`Unknown provider: ${p}`);

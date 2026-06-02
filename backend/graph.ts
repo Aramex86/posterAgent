@@ -12,6 +12,7 @@ import { uploadImageNode } from "./nodes/uploadImageNode";
 import { telegramNotifyNode } from "./nodes/telegramNotifyNode";
 import { approvePostingNode } from "./nodes/approvePostingNode";
 import { postToLinkedInNode } from "./nodes/postToLinkedInNode";
+import { cancelNode } from "./nodes/cancelNode";
 
 // const checkpointer = SqliteSaver.fromConnString("./checkpoints.sqlite");
 const checkpointer = new MemorySaver();
@@ -27,7 +28,8 @@ const workflow = new StateGraph(GraphState)
   .addNode("upload_image", uploadImageNode)
   .addNode("telegram_notify", telegramNotifyNode)
   .addNode("approve_posting", approvePostingNode)
-  .addNode("post_to_linkedin", postToLinkedInNode);
+  .addNode("post_to_linkedin", postToLinkedInNode)
+  .addNode("cancel", cancelNode);
 
 workflow.addEdge(START, "scrape");
 
@@ -80,16 +82,17 @@ workflow.addConditionalEdges(
   "approve_posting",
   (state) => {
     if (state.error) return "fail";
-    return state.isPostingApproved ? "post" : "skip";
+    return state.isPostingApproved ? "post" : "cancel";
   },
   {
     post: "post_to_linkedin",
-    skip: END,
+    cancel: "cancel",
     fail: END,
   },
 );
 
 workflow.addEdge("post_to_linkedin", END);
+workflow.addEdge("cancel", END);
 
 export const appGraph = workflow.compile({
   checkpointer,

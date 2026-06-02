@@ -11,8 +11,11 @@ const envSchema = z.object({
   GROQ_MODEL: z.string().default("llama-3.3-70b-versatile"),
   GEMINI_MODEL_API_KEY: z.string().optional(),
   GEMINI_MODEL: z.string().default("gemini-2.0-flash-lite"),
+  OLLAMA_API_KEY: z.string().optional(),
+  OLLAMA_MODEL: z.string().default("gemma4:31b-cloud"),
+  OLLAMA_BASE_URL: z.string().optional(),
   DEFAULT_PROVIDER: z
-    .enum(["openai", "anthropic", "groq", "gemini"])
+    .enum(["openai", "anthropic", "groq", "gemini", "ollama"])
     .default("openai"),
   PORT: z.string().default("5000"),
   // Cloudinary
@@ -31,7 +34,7 @@ const envSchema = z.object({
 const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {
-  console.error("Invalid environment variables", parsed.error.format());
+  console.error("Invalid environment variables", parsed.error.issues);
   throw new Error("Invalid environment variables");
 }
 
