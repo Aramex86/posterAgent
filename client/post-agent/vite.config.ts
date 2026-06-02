@@ -18,7 +18,7 @@ const config = defineConfig({
     exclude: ['@langchain/react'],
   },
   preview: {
-    allowedHosts: ['.railway.app', 'localhost'],
+    allowedHosts: true,
   },
 })
 
