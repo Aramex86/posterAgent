@@ -145,73 +145,6 @@ async function publishViaZernio(
   };
 }
 
-async function publishToLinkedIn(
-  state: StateType,
-  formattedText: string,
-): Promise<Partial<StateType>> {
-  const linkedInApiUrl = "https://api.linkedin.com/v2/ugcPosts";
-
-  const postBody: any = {
-    author: env.LINKEDIN_AUTHOR_URN,
-    lifecycleState: "PUBLISHED",
-    specificContent: {
-      "com.linkedin.ugc.ShareContent": {
-        shareCommentary: {
-          text: formattedText,
-        },
-        shareMediaCategory: "NONE",
-      },
-    },
-    visibility: {
-      "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
-    },
-  };
-
-  if (state.imageUrl) {
-    console.log("📸 Image detected, registering with LinkedIn...");
-    console.log("Image URL:", state.imageUrl);
-  }
-
-  const response = await fetch(linkedInApiUrl, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${env.LINKEDIN_ACCESS_TOKEN}`,
-      "Content-Type": "application/json",
-      "X-Restli-Protocol-Version": "2.0.0",
-    },
-    body: JSON.stringify(postBody),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.text();
-    throw new Error(`LinkedIn API error ${response.status}: ${errorData}`);
-  }
-
-  const result = await response.json();
-  console.log("✅ LinkedIn post published:", result.id);
-
-  if (state.telegramChatId && state.telegramMessageId) {
-    try {
-      await bot.api.editMessageText(
-        state.telegramChatId,
-        state.telegramMessageId,
-        "✅ *Posted to LinkedIn!*\n\n" +
-          escapeMarkdown(state.post.postTitle) +
-          "\n\n[View on LinkedIn](https://www.linkedin.com/feed/)",
-        { parse_mode: "Markdown" },
-      );
-    } catch (tgError: any) {
-      console.warn("Failed to update Telegram message:", tgError.message);
-    }
-  }
-
-  return {
-    isPosted: true,
-    status: "POSTED_TO_LINKEDIN",
-    error: null,
-  };
-}
-
 async function handlePostError(
   state: StateType,
   error: Error,
@@ -248,7 +181,7 @@ export async function postToLinkedInNode(
 
   const formattedText = formatPostText(state.post);
 
-  // 1. Try Zernio first
+  // 1. Try Zernio
   if (env.ZERNIO_API_KEY) {
     try {
       const accountId =
@@ -257,20 +190,12 @@ export async function postToLinkedInNode(
         return await publishViaZernio(state, formattedText, accountId);
       }
     } catch (error: any) {
-      console.warn("Zernio posting failed, falling back:", error.message);
-    }
-  }
-
-  // 2. Fallback to direct LinkedIn API
-  if (env.LINKEDIN_ACCESS_TOKEN && env.LINKEDIN_AUTHOR_URN) {
-    try {
-      return await publishToLinkedIn(state, formattedText);
-    } catch (error: any) {
+      console.warn("Zernio posting failed:", error.message);
       return handlePostError(state, error);
     }
   }
 
-  // 3. Simulation
+  // 2. Simulation
   return simulatePost(state, formattedText);
 }
 
