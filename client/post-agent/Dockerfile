@@ -7,6 +7,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
+# Clear caches to ensure fresh build
+RUN rm -rf node_modules/.vite dist .turbo
+
 # Copy source and build
 COPY . .
 RUN npm run build
