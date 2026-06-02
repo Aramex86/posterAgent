@@ -1,7 +1,7 @@
 import { createServer } from 'node:http'
 import handler from './dist/server/server.js'
 
-const PORT = process.env.PORT || 80
+const PORT = 80
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`)
