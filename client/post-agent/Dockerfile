@@ -21,9 +21,9 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Create startup script to handle Railway's PORT env var
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
+COPY docker-entrypoint.sh /start.sh
+RUN chmod +x /start.sh
 
 EXPOSE 80
 
-CMD ["/docker-entrypoint.sh"]
+ENTRYPOINT ["/start.sh"]
