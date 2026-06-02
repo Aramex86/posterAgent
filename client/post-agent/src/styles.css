@@ -3,25 +3,13 @@
 @plugin "@tailwindcss/typography";
 
 /* Override Ant Design CSS-in-JS styles that conflict with Tailwind */
-.ant-layout {
-  background: transparent !important;
-}
-
-.ant-layout-header {
-  background: transparent !important;
-}
-
-.ant-card {
-  background: transparent !important;
-}
-
+.ant-layout,
+.ant-layout-header,
+.ant-card,
 .ant-input,
-.ant-input-affix-wrapper {
-  background: transparent !important;
-}
-
+.ant-input-affix-wrapper,
 .ant-btn-primary {
-  background: transparent !important;
+  background-color: transparent !important;
 }
 
 *,
