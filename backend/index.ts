@@ -16,10 +16,13 @@ await fastify.register(cors, {
       /^https:\/\/.*\.railway\.app$/,
       /^https:\/\/.*\.up\.railway\.app$/,
     ];
-    
-    if (!origin || allowedOrigins.some(o => 
-      typeof o === 'string' ? o === origin : o.test(origin)
-    )) {
+
+    if (
+      !origin ||
+      allowedOrigins.some((o) =>
+        typeof o === "string" ? o === origin : o.test(origin),
+      )
+    ) {
       cb(null, true);
       return;
     }
