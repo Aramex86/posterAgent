@@ -11,7 +11,7 @@ RUN npm install
 COPY . .
 RUN npm run build
 
-# Production stage - run SSR server
+# Production stage - serve static files with vite preview
 FROM node:22-alpine
 
 WORKDIR /app
@@ -23,4 +23,4 @@ COPY --from=builder /app/package*.json ./
 
 EXPOSE 3000
 
-CMD ["node", "dist/server/server.js"]
+CMD ["npx", "vite", "preview", "--port", "3000", "--host", "0.0.0.0"]
