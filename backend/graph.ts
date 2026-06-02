@@ -13,6 +13,7 @@ import { telegramNotifyNode } from "./nodes/telegramNotifyNode";
 import { approvePostingNode } from "./nodes/approvePostingNode";
 import { postToLinkedInNode } from "./nodes/postToLinkedInNode";
 import { cancelNode } from "./nodes/cancelNode";
+import { discussNode } from "./nodes/discussNode";
 
 // const checkpointer = SqliteSaver.fromConnString("./checkpoints.sqlite");
 const checkpointer = new MemorySaver();
@@ -21,6 +22,7 @@ const workflow = new StateGraph(GraphState)
   .addNode("scrape", scrapingWebNode)
   .addNode("summarize", summarizeNode)
   .addNode("generate_content", generateContentNode)
+  .addNode("discuss", discussNode)
   .addNode("approve", approveNode)
   .addNode("rewrite", rewriteNode)
   .addNode("save", saveNode)
@@ -55,7 +57,24 @@ workflow.addConditionalEdges(
   },
 );
 
-workflow.addEdge("generate_content", "approve");
+// After generation, go to discussion
+workflow.addEdge("generate_content", "discuss");
+
+// Discussion loop: can approve, rewrite, or continue discussing
+workflow.addConditionalEdges(
+  "discuss",
+  (state) => {
+    if (state.error) return "fail";
+    if (state.status === "DISCUSSING") return "continue";
+    return state.isApproved ? "approve" : "rewrite";
+  },
+  {
+    continue: "discuss", // Loop back for more discussion
+    approve: "approve",
+    rewrite: "rewrite",
+    fail: END,
+  },
+);
 
 workflow.addConditionalEdges(
   "approve",

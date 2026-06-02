@@ -7,35 +7,50 @@ import { ChatOllama } from "@langchain/ollama";
 
 type Provider = "openai" | "anthropic" | "groq" | "gemini" | "ollama";
 
-export async function getModel(provider?: Provider) {
-  const p = provider ?? env.DEFAULT_PROVIDER;
+interface GetModelOptions {
+  provider?: Provider;
+  model?: string; // Override specific model name
+  temperature?: number;
+}
+
+export async function getModel(options?: GetModelOptions) {
+  const p = options?.provider ?? env.DEFAULT_PROVIDER;
+  const customModel = options?.model;
+  const temperature = options?.temperature ?? 0.7;
 
   switch (p) {
     case "openai":
       if (!env.OPENAI_API_KEY) throw new Error("❌ OPENAI_API_KEY missing");
       return new ChatOpenAI({
-        model: env.OPENAI_MODEL,
+        model: customModel ?? env.OPENAI_MODEL,
         apiKey: env.OPENAI_API_KEY,
+        temperature,
       });
 
     case "anthropic":
       if (!env.ANTHROPIC_API_KEY)
         throw new Error("❌ ANTHROPIC_API_KEY missing");
       return new ChatAnthropic({
-        model: env.ANTHROPIC_MODEL,
+        model: customModel ?? env.ANTHROPIC_MODEL,
         apiKey: env.ANTHROPIC_API_KEY,
+        temperature,
       });
 
     case "groq":
       if (!env.GROQ_API_KEY) throw new Error("❌ GROQ_API_KEY missing");
-      return new ChatGroq({ model: env.GROQ_MODEL, apiKey: env.GROQ_API_KEY });
+      return new ChatGroq({
+        model: customModel ?? env.GROQ_MODEL,
+        apiKey: env.GROQ_API_KEY,
+        temperature,
+      });
 
     case "gemini":
       if (!env.GEMINI_MODEL_API_KEY)
         throw new Error("❌ GEMINI_MODEL_API_KEY missing");
       return new ChatGoogle({
-        model: env.GEMINI_MODEL,
+        model: customModel ?? env.GEMINI_MODEL,
         apiKey: env.GEMINI_MODEL_API_KEY,
+        temperature,
       });
 
     case "ollama": {
@@ -49,10 +64,11 @@ export async function getModel(provider?: Provider) {
       }
 
       return new ChatOllama({
-        model: env.OLLAMA_MODEL,
+        model: customModel ?? env.OLLAMA_MODEL,
         baseUrl: env.OLLAMA_BASE_URL,
         headers,
         format: "json",
+        temperature,
       });
     }
 
