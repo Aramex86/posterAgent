@@ -34,3 +34,6 @@ generated-images/
 # SQLite
 *.db
 *.sqlite
+
+
+DEPLOY.md

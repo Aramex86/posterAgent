@@ -184,8 +184,7 @@ export async function postToLinkedInNode(
   // 1. Try Zernio
   if (env.ZERNIO_API_KEY) {
     try {
-      const accountId =
-        env.ZERNIO_LINKEDIN_ACCOUNT_ID || (await getZernioLinkedInAccountId());
+      const accountId = await getZernioLinkedInAccountId();
       if (accountId) {
         return await publishViaZernio(state, formattedText, accountId);
       }

@@ -27,12 +27,8 @@ const envSchema = z.object({
     .min(1, "CLOUDINARY_UPLOAD_PRESET is required"),
   // Zernio
   ZERNIO_API_KEY: z.string().optional(),
-  ZERNIO_LINKEDIN_ACCOUNT_ID: z.string().optional(),
   // Telegram
   TELEGRAM_BOT_TOKEN: z.string().min(1, "TELEGRAM_BOT_TOKEN is required"),
-  // LinkedIn
-  LINKEDIN_ACCESS_TOKEN: z.string().optional(),
-  LINKEDIN_AUTHOR_URN: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
