@@ -23,10 +23,9 @@ export async function discussNode(
   if (response.action === "discuss" && response.message) {
     try {
       // Use a lightweight Ollama Cloud model for discussion
-      // Available cloud models: gemma4:27b-cloud, qwen3.5:9b-cloud, 
-      // deepseek-v3.2-cloud, minimax-m2.5-cloud, glm-4.7-cloud
+      // Available: gemma4:26b, qwen3.5:9b, deepseek-v3.2, minimax-m2.5, glm-4.7
       const model = await getModel({
-        model: "gemma4:27b-cloud", // Fast and cost-effective for chat
+        model: "gemma4:26b", // Fast and cost-effective for chat
         temperature: 0.8,
       });
 
