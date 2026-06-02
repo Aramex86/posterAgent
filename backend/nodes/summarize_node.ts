@@ -27,11 +27,7 @@ export async function summarizeNode(
   Text: ${context}`;
 
   try {
-    // Use fast Ollama Cloud model for summarization
-    const summarizeAgent = await getModel({
-      model: "qwen3.5:cloud", // Small and fast for summarization
-      temperature: 0.3, // Low temperature for factual summary
-    });
+    const summarizeAgent = await getModel();
 
     const response = await summarizeAgent.invoke(system_message);
 
