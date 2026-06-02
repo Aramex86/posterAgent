@@ -16,7 +16,7 @@ interface GetModelOptions {
 export async function getModel(options?: GetModelOptions) {
   const p = options?.provider ?? env.DEFAULT_PROVIDER;
   const customModel = options?.model;
-  const temperature = options?.temperature ?? 0;
+  const temperature = options?.temperature ?? 1;
 
   switch (p) {
     case "openai":
