@@ -26,7 +26,7 @@ export async function discussNode(
       // Available: gemma4:26b, qwen3.5:9b, deepseek-v3.2, minimax-m2.5, glm-4.7
       const model = await getModel({
         model: "gemma4:31b-cloud", // Fast and cost-effective for chat
-        temperature: 0.8,
+        temperature: 1,
       });
 
       const systemPrompt = `You are a helpful LinkedIn content strategist. The user is discussing a draft post with you.

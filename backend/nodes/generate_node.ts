@@ -72,7 +72,7 @@ Ensure the new output strictly addresses the issues outlined in <human_feedback>
     // Options: gemma4:31b, deepseek-v4-pro, qwen3-next:80b
     const contentGeneratorAgent = await getModel({
       model: "gemma4:31b-cloud",
-      temperature: 0.7,
+      temperature: 1,
     });
 
     const structuredModel = contentGeneratorAgent.withStructuredOutput(
