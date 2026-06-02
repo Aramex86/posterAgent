@@ -11,17 +11,16 @@ RUN npm install
 COPY . .
 RUN npm run build
 
-# Production stage - serve static files with serve
+# Production stage - run SSR server
 FROM node:22-alpine
 
 WORKDIR /app
 
-# Copy built files
+# Copy built files and server entry
 COPY --from=builder /app/dist ./dist
-
-# Install serve globally
-RUN npm install -g serve
+COPY --from=builder /app/server-entry.js ./
+COPY --from=builder /app/package*.json ./
 
 EXPOSE 80
 
-CMD ["serve", "-s", "dist/client", "-l", "80"]
+CMD ["node", "server-entry.js"]
