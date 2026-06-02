@@ -24,7 +24,7 @@ const MIME_TYPES = {
 
 function serveStatic(req, res) {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`)
-  const filePath = join(STATIC_DIR, url.pathname)
+  const filePath = join(STATIC_DIR, url.pathname.slice(1))
 
   if (existsSync(filePath)) {
     const ext = extname(filePath)
