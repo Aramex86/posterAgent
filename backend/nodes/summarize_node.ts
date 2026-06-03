@@ -27,7 +27,11 @@ export async function summarizeNode(
   Text: ${context}`;
 
   try {
-    const summarizeAgent = await getModel();
+    const summarizeAgent = await getModel({
+      provider: "ollama",
+      model: "gemma4:31b-cloud",
+      temperature: 0,
+    });
 
     const response = await summarizeAgent.invoke(system_message);
 
