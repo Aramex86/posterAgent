@@ -33,12 +33,6 @@ export const GraphState = Annotation.Root({
   isPosted: Annotation<boolean>,
   postingError: Annotation<string | null>,
   isPostingApproved: Annotation<boolean>,
-  // Chat mode fields
-  chatHistory: Annotation<
-    Array<{ role: "user" | "assistant"; content: string }>
-  >,
-  chatMode: Annotation<boolean>,
-  chatConcluded: Annotation<boolean>,
 });
 
 export type StateType = typeof GraphState.State;

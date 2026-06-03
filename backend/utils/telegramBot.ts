@@ -4,22 +4,13 @@ import { env } from "../env";
 export const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
 
 // Set bot commands menu
-bot.api
-  .setMyCommands([
-    { command: "start", description: "Start the bot and see welcome message" },
-    {
-      command: "generate",
-      description: "Generate a LinkedIn post from URL: /generate <url>",
-    },
-    {
-      command: "chat",
-      description: "Start free chat mode to discuss ideas: /chat <topic>",
-    },
-    { command: "help", description: "Show help and available commands" },
-  ])
-  .catch((err) => {
-    console.warn("⚠️ Failed to set bot commands:", err.message);
-  });
+bot.api.setMyCommands([
+  { command: "start", description: "Start the bot and see welcome message" },
+  { command: "generate", description: "Generate a LinkedIn post from URL: /generate <url>" },
+  { command: "help", description: "Show help and available commands" },
+]).catch((err) => {
+  console.warn("⚠️ Failed to set bot commands:", err.message);
+});
 
 // Handle 409 Conflict errors gracefully (when old deployment is still running)
 bot.catch((err) => {

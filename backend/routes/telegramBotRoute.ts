@@ -27,98 +27,15 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
         "*Commands:*\n" +
         "/start — Welcome message\n" +
         "/generate \u003curl\u003e — Generate LinkedIn post from URL\n" +
-        "/chat <topic> — Start free chat mode to discuss ideas\n" +
         "/help — Show this help\n\n" +
-        "*Modes:*\n" +
-        "*Generate mode:*\n" +
+        "*How it works:*\n" +
         "1. Send /generate with a URL\n" +
         "2. Bot scrapes and summarizes the article\n" +
         "3. AI generates a LinkedIn post with code snippet\n" +
         "4. You approve or request rewrite\n" +
-        "5. Bot posts to your LinkedIn via Zernio\n\n" +
-        "*Chat mode:*\n" +
-        "1. Send /chat with a topic\n" +
-        "2. Discuss ideas freely with AI\n" +
-        "3. AI asks questions and suggests angles\n" +
-        "4. Say 'done' when ready\n" +
-        "5. AI generates a post from your conversation",
+        "5. Bot posts to your LinkedIn via Zernio",
       { parse_mode: "Markdown" },
     );
-  });
-
-  // Handle /chat <topic> command
-  bot.command("chat", async (ctx) => {
-    const messageText = ctx.message?.text || "";
-    const parts = messageText.split(" ");
-    const topic = parts.slice(1).join(" ") || "React development";
-    const chatId = ctx.chat.id;
-    const thread_id = `telegram_chat_${chatId}_${Date.now()}`;
-
-    await ctx.reply(
-      `💬 Starting free chat mode about: *${escapeMarkdown(topic)}*\n\nI'll ask questions and suggest ideas. Type 'done' when ready to generate a post, or 'cancel' to stop.`,
-      { parse_mode: "Markdown" },
-    );
-
-    // Store mapping
-    setChatThread(chatId, thread_id + "_chat");
-    setPendingFeedback(chatId, true);
-
-    // Start the graph in chat mode
-    const config = { configurable: { thread_id } };
-
-    (async () => {
-      try {
-        const stream = await appGraph.stream(
-          {
-            url: topic,
-            telegramChatId: chatId,
-            docs: [],
-            summary: "",
-            post: {} as any,
-            challenge: "",
-            isApproved: false,
-            feedback: "",
-            error: null,
-            rewriteCount: 0,
-            status: "initialized",
-            imageUrl: "",
-            telegramMessageId: undefined,
-            isPosted: false,
-            postingError: null,
-            isPostingApproved: false,
-            chatHistory: [],
-            chatMode: true,
-            chatConcluded: false,
-          },
-          { ...config, streamMode: "updates" },
-        );
-
-        for await (const chunk of stream) {
-          for (const [nodeName] of Object.entries(chunk)) {
-            console.log(`📱 Telegram chat flow - completed node: ${nodeName}`);
-          }
-        }
-
-        // Check if paused at free_chat
-        const snap = await appGraph.getState(config);
-        const isPausedForChat = snap.next && snap.next.includes("free_chat");
-
-        if (isPausedForChat) {
-          console.log(
-            `⏸️ Telegram chat graph paused at free_chat for thread: ${thread_id}`,
-          );
-          // The initial interrupt will be handled by the text message handler
-        }
-      } catch (err: any) {
-        console.error(
-          `❌ Telegram chat background graph error on thread ${thread_id}:\n`,
-          err,
-        );
-        await ctx
-          .reply(`❌ Error starting chat: ${err.message}`)
-          .catch(() => {});
-      }
-    })();
   });
 
   // Handle /generate <url> command
@@ -203,9 +120,6 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
             isPosted: false,
             postingError: null,
             isPostingApproved: false,
-            chatHistory: [],
-            chatMode: false,
-            chatConcluded: false,
           },
           { ...config, streamMode: "updates" },
         );
@@ -231,27 +145,64 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
           }
         }
 
-        // Check if paused at approval or posting
+        // Check if paused at approval or discussion
         const snap = await appGraph.getState(config);
         const isPausedForApproval = snap.next && snap.next.includes("approve");
-        const isPausedForChat = snap.next && snap.next.includes("free_chat");
+        const isPausedForDiscussion =
+          snap.next && snap.next.includes("discuss");
         const isPausedForPosting =
           snap.next && snap.next.includes("approve_posting");
 
-        if (isPausedForChat) {
+        if (isPausedForDiscussion) {
           console.log(
-            `⏸️ Telegram graph paused at free_chat for thread: ${thread_id}`,
+            `⏸️ Telegram graph paused at discussion for thread: ${thread_id}`,
           );
-          await ctx.reply(
-            "💬 *Chat Mode Activated*\n\n" +
-              "Let's discuss your topic freely! I'll ask questions and suggest ideas.\n\n" +
-              "Type your message or:\n" +
-              "• 'done' — finish chat and generate post\n" +
-              "• 'cancel' — cancel and start over",
-            { parse_mode: "Markdown" },
+          await updateProgress(
+            3,
+            "💬",
+            "Post generated! Let's discuss before approval...",
           );
+
+          // Get the generated post
+          const post = snap.values.post;
+          const postTitle = post?.postTitle || "Untitled";
+          const postContent = post?.postContent || "";
+          const hashtags = post?.hashtags?.join(" ") || "";
+
+          // Send post preview with discussion buttons
+          await bot.api.sendMessage(
+            chatId,
+            `📝 *Post Preview*\n\n` +
+              `*${escapeMarkdown(postTitle)}*\n\n` +
+              `${escapeMarkdown(postContent.slice(0, 800))}${postContent.length > 800 ? "..." : ""}\n\n` +
+              `${escapeMarkdown(hashtags)}\n\n` +
+              `What would you like to do?`,
+            {
+              parse_mode: "Markdown",
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    {
+                      text: "✅ Approve",
+                      callback_data: `approve_content:${thread_id}`,
+                    },
+                    {
+                      text: "💬 Discuss",
+                      callback_data: `discuss_content:${thread_id}`,
+                    },
+                  ],
+                  [
+                    {
+                      text: "🔄 Rewrite",
+                      callback_data: `rewrite_content:${thread_id}`,
+                    },
+                  ],
+                ],
+              },
+            },
+          );
+
           setPendingFeedback(chatId, true);
-          setChatThread(chatId, thread_id + "_chat");
           return;
         }
 
@@ -330,14 +281,41 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
     // Parse callback data: "approve_post:STATUS" or "skip_post:STATUS"
     const [action, threadIdFromCallback] = callbackData.split(":");
 
-    // Handle content approval/rewrite from first gate
-    if (action === "approve_content" || action === "rewrite_content") {
+    // Handle content approval/rewrite/discussion from first gate
+    if (
+      action === "approve_content" ||
+      action === "rewrite_content" ||
+      action === "discuss_content"
+    ) {
       const thread_id = threadIdFromCallback || getChatThread(chatId);
 
       if (!thread_id) {
         await ctx.answerCallbackQuery({
           text: "❌ Session expired. Please start again with /generate <url>",
         });
+        return;
+      }
+
+      if (action === "discuss_content") {
+        await ctx.answerCallbackQuery({
+          text: "💬 Let's discuss! Type your question or comment.",
+        });
+        await ctx.editMessageReplyMarkup({
+          reply_markup: { inline_keyboard: [] },
+        });
+        await ctx.reply(
+          "📝 *Discussion Mode*\n\n" +
+            "Ask me anything about the post:\n" +
+            "• Why did you choose this angle?\n" +
+            "• Can you make it more technical?\n" +
+            "• Add a real-world example\n" +
+            "• Explain the code better\n\n" +
+            "Type your question or 'approve' to continue.",
+          { parse_mode: "Markdown" },
+        );
+        setPendingFeedback(chatId, true);
+        // Store that we're in discussion mode
+        setChatThread(chatId, thread_id + "_discuss");
         return;
       }
 
@@ -377,7 +355,7 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
         console.log(`🚀 Content approved for thread: ${thread_id}`);
       } catch (error: any) {
         console.error(
-          `❌ Failed to resume graph for thread ${thread_id}:\n`,
+          `❌ Failed to resume graph for thread ${thread_id}:`,
           error,
         );
         await ctx.reply(`❌ Error: ${error.message}`);
@@ -445,66 +423,32 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
       return;
     }
 
-    // Check if we're in chat mode
-    const isChat = thread_id.endsWith("_chat");
-    const cleanThreadId = isChat ? thread_id.replace("_chat", "") : thread_id;
+    // Check if we're in discussion mode
+    const isDiscussion = thread_id.endsWith("_discuss");
+    const cleanThreadId = isDiscussion
+      ? thread_id.replace("_discuss", "")
+      : thread_id;
 
-    if (isChat) {
+    if (isDiscussion) {
+      // User typed something in discussion mode
       setPendingFeedback(chatId, false);
 
-      // Check if user wants to conclude chat
+      // Check if user wants to approve after discussion
       if (
-        text.toLowerCase() === "done" ||
-        text.toLowerCase() === "готово" ||
-        text.toLowerCase() === "finish"
+        text.toLowerCase().includes("approve") ||
+        text.toLowerCase().includes("подтверждаю") ||
+        text.toLowerCase().includes("ok")
       ) {
-        await ctx.reply("📝 Generating post from our conversation...");
+        await ctx.reply("✅ Approved after discussion! Generating image...");
         try {
           const config = { configurable: { thread_id: cleanThreadId } };
           await appGraph.invoke(
-            new Command({ resume: { action: "conclude" } }),
+            new Command({ resume: { action: "approve" } }),
             config,
           );
-          console.log(`🚀 Chat concluded for thread: ${cleanThreadId}`);
-
-          // Check if now at approval
-          const snap = await appGraph.getState(config);
-          const isPausedForApproval =
-            snap.next && snap.next.includes("approve");
-
-          if (isPausedForApproval) {
-            const post = snap.values.post;
-            const postTitle = post?.postTitle || "Untitled";
-            const postContent = post?.postContent || "";
-            const hashtags = post?.hashtags?.join(" ") || "";
-
-            await bot.api.sendMessage(
-              chatId,
-              `📝 *Post Generated from Chat*\n\n` +
-                `*${escapeMarkdown(postTitle)}*\n\n` +
-                `${escapeMarkdown(postContent.slice(0, 800))}${postContent.length > 800 ? "..." : ""}\n\n` +
-                `${escapeMarkdown(hashtags)}\n\n` +
-                `What would you like to do?`,
-              {
-                parse_mode: "Markdown",
-                reply_markup: {
-                  inline_keyboard: [
-                    [
-                      {
-                        text: "✅ Approve & Continue",
-                        callback_data: `approve_content:${cleanThreadId}`,
-                      },
-                      {
-                        text: "🔄 Rewrite",
-                        callback_data: `rewrite_content:${cleanThreadId}`,
-                      },
-                    ],
-                  ],
-                },
-              },
-            );
-            setPendingFeedback(chatId, true);
-          }
+          console.log(
+            `🚀 Approved after discussion for thread: ${cleanThreadId}`,
+          );
         } catch (error: any) {
           console.error(`❌ Error:`, error);
           await ctx.reply(`❌ Error: ${error.message}`);
@@ -512,58 +456,68 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
         return;
       }
 
-      // Check if user wants to cancel
-      if (
-        text.toLowerCase() === "cancel" ||
-        text.toLowerCase() === "отмена" ||
-        text.toLowerCase() === "stop"
-      ) {
-        await ctx.reply(
-          "❌ Chat cancelled. Start over with /chat or /generate.",
-        );
-        try {
-          const config = { configurable: { thread_id: cleanThreadId } };
-          await appGraph.invoke(
-            new Command({ resume: { action: "cancel" } }),
-            config,
-          );
-          console.log(`🚀 Chat cancelled for thread: ${cleanThreadId}`);
-        } catch (error: any) {
-          console.error(`❌ Error:`, error);
-        }
-        return;
-      }
-
-      // Continue chat
-      await ctx.reply(`💬 Thinking about: "${text}"...`);
+      // Continue discussion
+      await ctx.reply(`💬 Discussing: "${text}"...`);
       try {
         const config = { configurable: { thread_id: cleanThreadId } };
         await appGraph.invoke(
-          new Command({ resume: { action: "continue", message: text } }),
+          new Command({ resume: { action: "discuss", message: text } }),
           config,
         );
-        console.log(`💬 Chat continued for thread: ${cleanThreadId}`);
+        console.log(`💬 Discussion continued for thread: ${cleanThreadId}`);
 
-        // Check if still chatting
+        // Check if still discussing
         const snap = await appGraph.getState(config);
-        const isStillChatting = snap.next && snap.next.includes("free_chat");
+        const isStillDiscussing = snap.next && snap.next.includes("discuss");
 
-        if (isStillChatting) {
-          const chatHistory = snap.values.chatHistory || [];
-          const lastMessage = chatHistory[chatHistory.length - 1];
-          if (lastMessage && lastMessage.role === "assistant") {
-            await ctx.reply(lastMessage.content);
-          }
+        if (isStillDiscussing) {
+          // AI responded, show buttons again
+          const post = snap.values.post;
+          const postTitle = post?.postTitle || "Untitled";
+          const postContent = post?.postContent || "";
+          const hashtags = post?.hashtags?.join(" ") || "";
+
+          await bot.api.sendMessage(
+            chatId,
+            `📝 *Post Preview*\n\n` +
+              `*${escapeMarkdown(postTitle)}*\n\n` +
+              `${escapeMarkdown(postContent.slice(0, 800))}${postContent.length > 800 ? "..." : ""}\n\n` +
+              `${escapeMarkdown(hashtags)}\n\n` +
+              `What would you like to do?`,
+            {
+              parse_mode: "Markdown",
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    {
+                      text: "✅ Approve",
+                      callback_data: `approve_content:${cleanThreadId}`,
+                    },
+                    {
+                      text: "💬 Discuss",
+                      callback_data: `discuss_content:${cleanThreadId}`,
+                    },
+                  ],
+                  [
+                    {
+                      text: "🔄 Rewrite",
+                      callback_data: `rewrite_content:${cleanThreadId}`,
+                    },
+                  ],
+                ],
+              },
+            },
+          );
           setPendingFeedback(chatId, true);
         }
       } catch (error: any) {
-        console.error(`❌ Chat error:`, error);
+        console.error(`❌ Discussion error:`, error);
         await ctx.reply(`❌ Error: ${error.message}`);
       }
       return;
     }
 
-    // Regular rewrite feedback (not chat mode)
+    // Regular rewrite feedback
     setPendingFeedback(chatId, false);
     await ctx.reply(`🔄 Rewriting with feedback: "${text}"...`);
 

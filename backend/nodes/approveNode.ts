@@ -13,9 +13,7 @@ export async function approveNode(
   //    the runtime wakes up and populates the 'response' variable.
   const response = interrupt({
     message: "A new draft is ready for review.",
-    currentDraft: state.post,
-    chatHistory: state.chatHistory || [],
-    chatMode: state.chatMode || false,
+    currentDraft: state.post, // Passes the structured title, content, and hashtags down
   }) as { approved: boolean; feedback?: string };
 
   console.log("--- 🚀 APPROVAL NODE RESUMED WITH HUMAN DECISION ---", response);
