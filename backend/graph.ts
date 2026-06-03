@@ -13,7 +13,8 @@ import { telegramNotifyNode } from "./nodes/telegramNotifyNode";
 import { approvePostingNode } from "./nodes/approvePostingNode";
 import { postToLinkedInNode } from "./nodes/postToLinkedInNode";
 import { cancelNode } from "./nodes/cancelNode";
-import { discussNode } from "./nodes/discussNode";
+import { freeChatNode } from "./nodes/freeChatNode";
+import { chatConclusionNode } from "./nodes/chatConclusionNode";
 
 // const checkpointer = SqliteSaver.fromConnString("./checkpoints.sqlite");
 const checkpointer = new MemorySaver();
@@ -22,7 +23,6 @@ const workflow = new StateGraph(GraphState)
   .addNode("scrape", scrapingWebNode)
   .addNode("summarize", summarizeNode)
   .addNode("generate_content", generateContentNode)
-  .addNode("discuss", discussNode)
   .addNode("approve", approveNode)
   .addNode("rewrite", rewriteNode)
   .addNode("save", saveNode)
@@ -31,9 +31,21 @@ const workflow = new StateGraph(GraphState)
   .addNode("telegram_notify", telegramNotifyNode)
   .addNode("approve_posting", approvePostingNode)
   .addNode("post_to_linkedin", postToLinkedInNode)
-  .addNode("cancel", cancelNode);
+  .addNode("cancel", cancelNode)
+  .addNode("free_chat", freeChatNode)
+  .addNode("chat_conclusion", chatConclusionNode);
 
-workflow.addEdge(START, "scrape");
+// Route based on chat mode
+workflow.addConditionalEdges(
+  START,
+  (state) => {
+    return state.chatMode ? "chat" : "scrape";
+  },
+  {
+    chat: "free_chat",
+    scrape: "scrape",
+  },
+);
 
 workflow.addConditionalEdges(
   "scrape",
@@ -57,21 +69,25 @@ workflow.addConditionalEdges(
   },
 );
 
-// After generation, go to discussion
-workflow.addEdge("generate_content", "discuss");
+// After generation, go directly to approval
+workflow.addEdge("generate_content", "approve");
 
-// Discussion loop: can approve, rewrite, or continue discussing
+// After chat conclusion, go directly to approval
+workflow.addEdge("chat_conclusion", "approve");
+
+// Free chat loop: can continue, conclude, or cancel
 workflow.addConditionalEdges(
-  "discuss",
+  "free_chat",
   (state) => {
     if (state.error) return "fail";
-    if (state.status === "DISCUSSING") return "continue";
-    return state.isApproved ? "approve" : "rewrite";
+    if (state.status === "CHAT_CANCELLED") return "cancel";
+    if (state.status === "CHAT_CONCLUDED") return "conclude";
+    return "continue";
   },
   {
-    continue: "discuss", // Loop back for more discussion
-    approve: "approve",
-    rewrite: "rewrite",
+    continue: "free_chat",
+    conclude: "chat_conclusion",
+    cancel: "cancel",
     fail: END,
   },
 );
@@ -91,8 +107,19 @@ workflow.addConditionalEdges(
 
 workflow.addEdge("rewrite", "generate_content");
 
-// After save, continue to image generation and posting pipeline
-workflow.addEdge("save", "generate_image");
+// After save, check if we're in chat mode
+workflow.addConditionalEdges(
+  "save",
+  (state) => {
+    return state.chatMode ? "chat_done" : "continue_pipeline";
+  },
+  {
+    chat_done: END,
+    continue_pipeline: "generate_image",
+  },
+);
+
+// Continue with image generation and posting pipeline (only for non-chat mode)
 workflow.addEdge("generate_image", "upload_image");
 workflow.addEdge("upload_image", "telegram_notify");
 workflow.addEdge("telegram_notify", "approve_posting");

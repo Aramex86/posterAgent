@@ -10,7 +10,11 @@ export const runAgentController = async (
 ) => {
   const thread_id = `session_${crypto.randomUUID()}`;
 
-  const { url } = request.body as { url: string; thread_id: string };
+  const { url, chatMode } = request.body as {
+    url: string;
+    thread_id: string;
+    chatMode?: boolean;
+  };
 
   console.log(`🚀 Starting agent execution for thread: ${thread_id}`);
 
@@ -18,7 +22,7 @@ export const runAgentController = async (
     // 2. ⚡ REMOVE THE 'await' KEYWORD HERE!
     // This launches your runAgent utility function in the background.
     // The graph begins running nodes immediately, but it does NOT freeze this HTTP thread.
-    runAgent(url, thread_id).catch((err) => {
+    runAgent(url, thread_id, chatMode || false).catch((err) => {
       console.error(
         `❌ Background runAgent error on thread ${thread_id}:`,
         err,

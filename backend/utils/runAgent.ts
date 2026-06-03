@@ -1,7 +1,11 @@
 import { appGraph } from "../graph";
 import { saveToFile } from "./savePostFile";
 
-export async function runAgent(url: string, thread_id: string) {
+export async function runAgent(
+  url: string,
+  thread_id: string,
+  chatMode: boolean = false,
+) {
   const config = { configurable: { thread_id } };
 
   const fileName = `post_${thread_id}.json`;
@@ -26,6 +30,9 @@ export async function runAgent(url: string, thread_id: string) {
         isPosted: false,
         postingError: null,
         isPostingApproved: false,
+        chatHistory: [],
+        chatMode,
+        chatConcluded: false,
       },
       config,
     );

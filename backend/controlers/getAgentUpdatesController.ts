@@ -38,6 +38,23 @@ function handleApprovalGates(
       message: "__interrupt__",
       timestamp: Date.now(),
       post: state.values.post || null,
+      chatHistory: state.values.chatHistory || [],
+      chatMode: state.values.chatMode || false,
+    };
+    reply.raw.write(
+      `id: ${thread_id}\nevent: update\ndata: ${JSON.stringify(payload)}\n\n`,
+    );
+  }
+
+  if (state.next?.includes("free_chat")) {
+    console.log(
+      "🎯 Thread resting at 'free_chat' node. Informing frontend UI...",
+    );
+    const payload = {
+      message: "__chat__",
+      timestamp: Date.now(),
+      chatHistory: state.values.chatHistory || [],
+      chatMode: true,
     };
     reply.raw.write(
       `id: ${thread_id}\nevent: update\ndata: ${JSON.stringify(payload)}\n\n`,
