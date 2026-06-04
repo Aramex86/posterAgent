@@ -29,6 +29,7 @@ const envSchema = z.object({
   ZERNIO_API_KEY: z.string().optional(),
   // Telegram
   TELEGRAM_BOT_TOKEN: z.string().min(1, "TELEGRAM_BOT_TOKEN is required"),
+  TELEGRAM_ADMIN_CHAT_ID: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

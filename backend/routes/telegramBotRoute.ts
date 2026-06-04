@@ -27,6 +27,7 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
         "*Commands:*\n" +
         "/start — Welcome message\n" +
         "/generate \u003curl\u003e — Generate LinkedIn post from URL\n" +
+        "/myid — Get your Telegram chat ID\n" +
         "/help — Show this help\n\n" +
         "*How it works:*\n" +
         "1. Send /generate with a URL\n" +
@@ -34,6 +35,18 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
         "3. AI generates a LinkedIn post with code snippet\n" +
         "4. You approve or request rewrite\n" +
         "5. Bot posts to your LinkedIn via Zernio",
+      { parse_mode: "Markdown" },
+    );
+  });
+
+  // Handle /myid command
+  bot.command("myid", async (ctx) => {
+    const chatId = ctx.chat.id;
+    await ctx.reply(
+      `🆔 *Your Telegram Chat ID*\n\n` +
+        `\`${chatId}\`\n\n` +
+        `Add this to your \`.env\` as:\n` +
+        `TELEGRAM_ADMIN_CHAT_ID=${chatId}`,
       { parse_mode: "Markdown" },
     );
   });
@@ -401,6 +414,56 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
         );
         await ctx.reply(`❌ Error: ${error.message}`);
       }
+      return;
+    }
+
+    // Handle pattern review approval/rejection
+    if (action === "approve_patterns" || action === "reject_patterns") {
+      const approved = action === "approve_patterns";
+
+      try {
+        await ctx.answerCallbackQuery({
+          text: approved ? "✅ Patterns approved!" : "❌ Patterns rejected.",
+        });
+      } catch (e) {
+        // Callback query may be expired, ignore
+      }
+
+      try {
+        const {
+          approvePendingPatterns,
+          rejectPendingPatterns,
+          loadPendingPatterns,
+        } = await import("../utils/patternLearning.js");
+        const pending = loadPendingPatterns();
+
+        if (!pending) {
+          await ctx.reply("⚠️ No pending pattern review found.");
+          return;
+        }
+
+        if (approved) {
+          approvePendingPatterns();
+          await ctx.reply(
+            "✅ *Pattern Review Approved*\n\n" +
+              "New writing patterns have been saved and will be used for future post generation.",
+            { parse_mode: "Markdown" },
+          );
+          console.log(`✅ Pattern review approved by chat ${chatId}`);
+        } else {
+          rejectPendingPatterns();
+          await ctx.reply(
+            "❌ *Pattern Review Rejected*\n\n" +
+              "Current writing patterns remain unchanged.",
+            { parse_mode: "Markdown" },
+          );
+          console.log(`❌ Pattern review rejected by chat ${chatId}`);
+        }
+      } catch (error: any) {
+        console.error("❌ Pattern approval callback error:", error.message);
+        await ctx.reply(`❌ Error: ${error.message}`);
+      }
+      return;
     }
   });
 

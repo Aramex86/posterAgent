@@ -33,6 +33,8 @@ export const GraphState = Annotation.Root({
   isPosted: Annotation<boolean>,
   postingError: Annotation<string | null>,
   isPostingApproved: Annotation<boolean>,
+  // Topic inference for dynamic system messages
+  topic: Annotation<string>,
 });
 
 export type StateType = typeof GraphState.State;

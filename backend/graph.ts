@@ -2,6 +2,7 @@ import { START, END, StateGraph, MemorySaver } from "@langchain/langgraph";
 import { GraphState } from "./state";
 import { scrapingWebNode } from "./nodes/scrapingWeb_node";
 import { summarizeNode } from "./nodes/summarize_node";
+import { inferTopicNode } from "./nodes/inferTopicNode";
 import { generateContentNode } from "./nodes/generate_node";
 // import { SqliteSaver } from "@langchain/langgraph-checkpoint-sqlite";
 import { rewriteNode } from "./nodes/rewrite_node";
@@ -21,6 +22,7 @@ const checkpointer = new MemorySaver();
 const workflow = new StateGraph(GraphState)
   .addNode("scrape", scrapingWebNode)
   .addNode("summarize", summarizeNode)
+  .addNode("infer_topic", inferTopicNode)
   .addNode("generate_content", generateContentNode)
   .addNode("discuss", discussNode)
   .addNode("approve", approveNode)
@@ -48,6 +50,17 @@ workflow.addConditionalEdges(
 
 workflow.addConditionalEdges(
   "summarize",
+  (state) => {
+    return state.error ? "fail" : "continue";
+  },
+  {
+    fail: END,
+    continue: "infer_topic",
+  },
+);
+
+workflow.addConditionalEdges(
+  "infer_topic",
   (state) => {
     return state.error ? "fail" : "continue";
   },

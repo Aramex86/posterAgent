@@ -19,9 +19,9 @@ export async function summarizeNode(
     .map((doc) => doc.pageContent)
     .join("\n\n---\n\n");
 
-  const system_message = `You are a React expert. Below is the documentation text.
+  const system_message = `You are a software engineering expert. Below is the documentation text.
   Provide a brief summary, highlighting:
-  1. The main purpose of this API/Hook.
+  1. The main purpose of this API/Hook/Concept.
   2. The single most important usage example.
   
   Text: ${context}`;

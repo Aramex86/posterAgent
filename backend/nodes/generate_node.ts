@@ -1,6 +1,7 @@
 import { StateType } from "../state";
 import { OutputSchema } from "../types/generate_content_type";
 import { getModel } from "../utils/model";
+import { loadPatterns } from "../utils/patternLearning";
 
 export async function generateContentNode(
   state: StateType,
@@ -10,17 +11,26 @@ export async function generateContentNode(
   // Determine if this is a fresh run or a loop back from human revision
   const isRewriteRun = state.feedback && state.feedback.trim() !== "";
 
+  // Load learned patterns (fresh from disk every time)
+  const learned = loadPatterns();
+  const topic = state.topic || "software";
+  const topicPatterns = learned.topicPatterns[topic] || [];
+  const allPatterns = [...learned.globalPatterns, ...topicPatterns];
+
   const system_message = `
-You are an expert React Developer and a popular tech blogger. Your job is to create high-performing LinkedIn posts that teach technical concepts clearly.
+You are an expert ${topic} developer and a popular tech blogger. Your job is to create high-performing LinkedIn posts that teach technical concepts clearly.
 
 CRITICAL INSTRUCTIONS:
 1. Write an engaging LinkedIn post with a strong hook-style headline.
-2. Explain the React concept/hook in simple, plain terms.
-3. Include a minimal, practical code example using valid JSX syntax.
+2. Explain the ${topic} concept in simple, plain terms.
+3. Include a minimal, practical code example using valid syntax for the topic.
 4. Keep the text layout highly scannable (short sentences, clear spacing). Do not use emojis unless explicitly requested.
 5. Create a thought-provoking, brief "Challenge" (practical exercise) at the end to reinforce the material.
 6. Return your final answer strictly structured matching the required output schema.
 7. IMPORTANT: Return ONLY valid JSON. Do not include markdown formatting, code blocks, or any text outside the JSON object.
+
+LEARNED WRITING PATTERNS (based on past post analytics):
+${allPatterns.map((p) => `- ${p}`).join("\n")}
 
 EXAMPLE OUTPUT FORMAT (use these exact field names):
 {
@@ -63,7 +73,7 @@ Title: ${state.post?.postTitle || ""}
 Content: ${state.post?.postContent || ""}
 </previous_draft>
 
-Ensure the new output strictly addresses the issues outlined in <human_feedback> while preserving the core React lessons.
+Ensure the new output strictly addresses the issues outlined in <human_feedback> while preserving the core ${topic} lessons.
     `.trim();
   }
 
