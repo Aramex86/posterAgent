@@ -33,11 +33,11 @@ export async function runAgent(url: string, thread_id: string) {
     const snap = await appGraph.getState(config);
 
     const isPausedForApproval =
-      snap.next && snap.next.includes("human_approval");
+      snap.next && snap.next.includes("discuss");
 
     if (isPausedForApproval) {
       console.log(
-        `⏸️ Graph paused at [human_approval] for thread: ${thread_id}`,
+        `⏸️ Graph paused at [discuss] for thread: ${thread_id}`,
       );
 
       return {

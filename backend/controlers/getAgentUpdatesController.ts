@@ -30,9 +30,10 @@ function handleApprovalGates(
   state: any,
   thread_id: string,
 ) {
-  if (state.next?.includes("approve")) {
+  // Handle discuss node (where the interrupt happens for approval)
+  if (state.next?.includes("discuss")) {
     console.log(
-      "🎯 Thread resting at 'approve' node. Informing frontend UI...",
+      "🎯 Thread resting at 'discuss' node. Informing frontend UI...",
     );
     const payload = {
       message: "__interrupt__",
