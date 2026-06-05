@@ -22,19 +22,17 @@ export async function validateController(
   try {
     const isApproved = !feedback || feedback.trim() === "";
 
-    const resumePayload = {
-      approved: isApproved,
-      feedback: isApproved ? "" : feedback,
-    };
+    // discussNode expects { action: "approve" | "discuss" | "rewrite", message?: string }
+    const resumePayload = isApproved
+      ? { action: "approve" }
+      : { action: "rewrite", message: feedback };
 
     console.log(
       `Sending resume payload to thread ${thread_id}:`,
       resumePayload,
     );
 
-    // 3. 🚀 The Magic: Wake up the graph and pass the user's decision in ONE clean call.
-    // This feeds directly into the response = interrupt(...) variable inside your approveNode.
-    // The graph wakes up, runs conditional edges, and executes downstream nodes (save or rewrite -> generate).
+    // 3. 🚀 Resume the graph from the discuss node interrupt.
     appGraph
       .invoke(new Command({ resume: resumePayload }), config)
       .then(async () => {
