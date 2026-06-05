@@ -79,11 +79,11 @@ workflow.addConditionalEdges(
   (state) => {
     if (state.error) return "fail";
     if (state.status === "DISCUSSING") return "continue";
-    return state.isApproved ? "approve" : "rewrite";
+    return state.isApproved ? "save" : "rewrite";
   },
   {
     continue: "discuss", // Loop back for more discussion
-    approve: "approve",
+    save: "save",        // Skip approve node — already approved in discuss
     rewrite: "rewrite",
     fail: END,
   },
