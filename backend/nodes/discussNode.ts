@@ -74,7 +74,7 @@ Please respond helpfully.`;
     isApproved: response.action === "approve",
     feedback:
       response.action === "rewrite"
-        ? "User requested rewrite after discussion"
+        ? response.message || "User requested rewrite after discussion"
         : "",
     status:
       response.action === "approve" ? "DISCUSS_APPROVED" : "DISCUSS_REWRITE",

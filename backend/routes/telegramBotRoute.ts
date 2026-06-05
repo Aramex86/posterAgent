@@ -333,6 +333,9 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
 
       const approved = action === "approve_content";
 
+      // Clean thread ID (remove _discuss suffix if present)
+      const cleanThreadId = thread_id.replace("_discuss", "");
+
       if (approved) {
         await ctx.answerCallbackQuery({
           text: "✅ Approved! Generating image...",
@@ -353,21 +356,23 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
             "Please reply with your feedback (e.g., 'Make it punchier', 'Add a hook', 'Shorter version')",
           { parse_mode: "Markdown" },
         );
+        // Update thread to clean ID so text handler routes correctly
+        setChatThread(chatId, cleanThreadId);
         setPendingFeedback(chatId, true);
         return;
       }
 
-      // Resume the graph
+      // Resume the graph from discuss node
       try {
-        const config = { configurable: { thread_id } };
+        const config = { configurable: { thread_id: cleanThreadId } };
         await appGraph.invoke(
-          new Command({ resume: { approved, feedback: "" } }),
+          new Command({ resume: { action: "approve" } }),
           config,
         );
-        console.log(`🚀 Content approved for thread: ${thread_id}`);
+        console.log(`🚀 Content approved for thread: ${cleanThreadId}`);
       } catch (error: any) {
         console.error(
-          `❌ Failed to resume graph for thread ${thread_id}:`,
+          `❌ Failed to resume graph for thread ${cleanThreadId}:`,
           error,
         );
         await ctx.reply(`❌ Error: ${error.message}`);
@@ -586,7 +591,7 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
     try {
       const config = { configurable: { thread_id: cleanThreadId } };
       await appGraph.invoke(
-        new Command({ resume: { approved: false, feedback: text } }),
+        new Command({ resume: { action: "rewrite", message: text } }),
         config,
       );
       console.log(`🔄 Rewrote content for thread: ${cleanThreadId}`);
