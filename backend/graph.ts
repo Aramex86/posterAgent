@@ -6,7 +6,6 @@ import { inferTopicNode } from "./nodes/inferTopicNode";
 import { generateContentNode } from "./nodes/generate_node";
 // import { SqliteSaver } from "@langchain/langgraph-checkpoint-sqlite";
 import { rewriteNode } from "./nodes/rewrite_node";
-import { approveNode } from "./nodes/approveNode";
 import { saveNode } from "./nodes/saveNode";
 import { generateImageNode } from "./nodes/generateImageNode";
 import { uploadImageNode } from "./nodes/uploadImageNode";
@@ -25,7 +24,6 @@ const workflow = new StateGraph(GraphState)
   .addNode("infer_topic", inferTopicNode)
   .addNode("generate_content", generateContentNode)
   .addNode("discuss", discussNode)
-  .addNode("approve", approveNode)
   .addNode("rewrite", rewriteNode)
   .addNode("save", saveNode)
   .addNode("generate_image", generateImageNode)
@@ -84,19 +82,6 @@ workflow.addConditionalEdges(
   {
     continue: "discuss", // Loop back for more discussion
     save: "save",        // Skip approve node — already approved in discuss
-    rewrite: "rewrite",
-    fail: END,
-  },
-);
-
-workflow.addConditionalEdges(
-  "approve",
-  (state) => {
-    if (state.error) return "fail";
-    return state.isApproved ? "save" : "rewrite";
-  },
-  {
-    save: "save",
     rewrite: "rewrite",
     fail: END,
   },
