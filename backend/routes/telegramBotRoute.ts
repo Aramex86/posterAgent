@@ -3,6 +3,7 @@ import { webhookCallback } from "grammy";
 import { bot } from "../utils/telegramBot";
 import { appGraph } from "../graph";
 import { Command } from "@langchain/langgraph";
+import { env } from "../env";
 import {
   setChatThread,
   getChatThread,
@@ -28,6 +29,7 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
         "/start — Welcome message\n" +
         "/generate \u003curl\u003e — Generate LinkedIn post from URL\n" +
         "/myid — Get your Telegram chat ID\n" +
+        "/testcron — Trigger daily analytics review (admin only)\n" +
         "/help — Show this help\n\n" +
         "*How it works:*\n" +
         "1. Send /generate with a URL\n" +
@@ -37,6 +39,62 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
         "5. Bot posts to your LinkedIn via Zernio",
       { parse_mode: "Markdown" },
     );
+  });
+
+  // Handle /testcron command (admin only)
+  bot.command("testcron", async (ctx) => {
+    const chatId = ctx.chat.id;
+    const adminChatId = env.TELEGRAM_ADMIN_CHAT_ID
+      ? Number(env.TELEGRAM_ADMIN_CHAT_ID)
+      : undefined;
+
+    if (!adminChatId || chatId !== adminChatId) {
+      await ctx.reply("❌ This command is restricted to admin users only.");
+      return;
+    }
+
+    await ctx.reply("🧪 Triggering daily analytics review...");
+
+    try {
+      const { runDailyAnalyticsReview } = await import("../utils/patternLearning.js");
+      const result = await runDailyAnalyticsReview();
+
+      if (result.hasPending) {
+        await ctx.reply(
+          `📊 *Daily Analytics Review Triggered*\n\n` +
+            `Summary: ${result.summary}\n\n` +
+            `Proposed new writing patterns are ready for your review.\n\n` +
+            `Approve to apply them to future posts.`,
+          {
+            parse_mode: "Markdown",
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "✅ Approve Patterns",
+                    callback_data: "approve_patterns",
+                  },
+                  {
+                    text: "❌ Reject Patterns",
+                    callback_data: "reject_patterns",
+                  },
+                ],
+              ],
+            },
+          },
+        );
+      } else {
+        await ctx.reply(
+          `📊 *Daily Analytics Review*\n\n` +
+            `No pending patterns to review.\n\n` +
+            `Summary: ${result.summary}`,
+          { parse_mode: "Markdown" },
+        );
+      }
+    } catch (error: any) {
+      console.error("❌ /testcron failed:", error.message);
+      await ctx.reply(`❌ Failed to trigger analytics review: ${error.message}`);
+    }
   });
 
   // Handle /myid command
