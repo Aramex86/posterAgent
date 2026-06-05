@@ -596,11 +596,11 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
       );
       console.log(`🔄 Rewrote content for thread: ${cleanThreadId}`);
 
-      // After rewrite, check if paused again
+      // After rewrite, check if paused at discuss again
       const snap = await appGraph.getState(config);
-      const isPausedForApproval = snap.next && snap.next.includes("approve");
+      const isPausedForDiscussion = snap.next && snap.next.includes("discuss");
 
-      if (isPausedForApproval) {
+      if (isPausedForDiscussion) {
         const post = snap.values.post;
         const postTitle = post?.postTitle || "Untitled";
         const postContent = post?.postContent || "";
@@ -619,12 +619,18 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
               inline_keyboard: [
                 [
                   {
-                    text: "✅ Approve & Continue",
-                    callback_data: `approve_content:${thread_id}`,
+                    text: "✅ Approve",
+                    callback_data: `approve_content:${cleanThreadId}`,
                   },
                   {
-                    text: "🔄 Rewrite Again",
-                    callback_data: `rewrite_content:${thread_id}`,
+                    text: "💬 Discuss",
+                    callback_data: `discuss_content:${cleanThreadId}`,
+                  },
+                ],
+                [
+                  {
+                    text: "🔄 Rewrite",
+                    callback_data: `rewrite_content:${cleanThreadId}`,
                   },
                 ],
               ],
