@@ -56,7 +56,8 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
     await ctx.reply("🧪 Triggering daily analytics review...");
 
     try {
-      const { runDailyAnalyticsReview } = await import("../utils/patternLearning.js");
+      const { runDailyAnalyticsReview } =
+        await import("../utils/patternLearning.js");
       const result = await runDailyAnalyticsReview();
 
       if (result.hasPending) {
@@ -93,7 +94,9 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
       }
     } catch (error: any) {
       console.error("❌ /testcron failed:", error.message);
-      await ctx.reply(`❌ Failed to trigger analytics review: ${error.message}`);
+      await ctx.reply(
+        `❌ Failed to trigger analytics review: ${error.message}`,
+      );
     }
   });
 
@@ -596,7 +599,20 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
         const isStillDiscussing = snap.next && snap.next.includes("discuss");
 
         if (isStillDiscussing) {
-          // AI responded, show buttons again
+          // AI responded, show the answer first
+          const feedback = snap.values.feedback || "";
+          const aiMatch = feedback.match(/AI:\s*(.+)/s);
+          const aiResponse = aiMatch ? aiMatch[1].trim() : null;
+
+          if (aiResponse) {
+            await bot.api.sendMessage(
+              chatId,
+              `💬 *AI Response*\n\n${escapeMarkdown(aiResponse.slice(0, 2000))}${aiResponse.length > 2000 ? "..." : ""}`,
+              { parse_mode: "Markdown" },
+            );
+          }
+
+          // Then show post preview with action buttons
           const post = snap.values.post;
           const postTitle = post?.postTitle || "Untitled";
           const postContent = post?.postContent || "";
