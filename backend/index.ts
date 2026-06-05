@@ -55,12 +55,11 @@ if (adminChatId) {
       if (result.hasPending) {
         await bot.api.sendMessage(
           adminChatId,
-          `📊 *Daily Analytics Review*\n\n` +
+          `📊 Daily Analytics Review\n\n` +
             `Summary: ${result.summary}\n\n` +
             `Proposed new writing patterns are ready for your review.\n\n` +
             `Approve to apply them to future posts.`,
           {
-            parse_mode: "Markdown",
             reply_markup: {
               inline_keyboard: [
                 [
@@ -89,8 +88,7 @@ if (adminChatId) {
       await bot.api
         .sendMessage(
           adminChatId,
-          `⚠️ *Daily Analytics Review Failed*\n\n${error.message}`,
-          { parse_mode: "Markdown" },
+          `⚠️ Daily Analytics Review Failed\n\n${error.message}`,
         )
         .catch(() => {});
     }

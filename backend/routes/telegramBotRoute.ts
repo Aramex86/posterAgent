@@ -43,11 +43,10 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
   bot.command("myid", async (ctx) => {
     const chatId = ctx.chat.id;
     await ctx.reply(
-      `🆔 *Your Telegram Chat ID*\n\n` +
-        `\`${chatId}\`\n\n` +
-        `Add this to your \`.env\` as:\n` +
+      `🆔 Your Telegram Chat ID\n\n` +
+        `${chatId}\n\n` +
+        `Add this to your .env as:\n` +
         `TELEGRAM_ADMIN_CHAT_ID=${chatId}`,
-      { parse_mode: "Markdown" },
     );
   });
 
