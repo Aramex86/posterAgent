@@ -12,6 +12,7 @@ bot.api
       description: "Generate a LinkedIn post from URL: /generate <url>",
     },
     { command: "myid", description: "Get your Telegram chat ID" },
+    { command: "testcron", description: "Trigger daily analytics review (admin only)" },
     { command: "help", description: "Show help and available commands" },
   ])
   .catch((err) => {
