@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "lastUpdated": "2026-06-05T06:10:49.816Z",
+  "lastReviewDate": "2026-06-05T06:10:49.817Z",
+  "reviewStatus": "approved",
+  "globalPatterns": [
+    "Use hook-style headlines under 8 words",
+    "Include a practical, runnable code example",
+    "Keep paragraphs under 3 lines for scannability",
+    "Add a brief challenge at the end to reinforce learning",
+    "Return ONLY valid JSON without markdown formatting"
+  ],
+  "topicPatterns": {}
+}

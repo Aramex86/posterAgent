@@ -47,7 +47,7 @@ const adminChatId = env.TELEGRAM_ADMIN_CHAT_ID
   : undefined;
 
 if (adminChatId) {
-  new Cron("0 8 * * *", { timezone: "UTC" }, async () => {
+  new Cron("0 0 10 * *", { timezone: "UTC" }, async () => {
     console.log("⏰ Running daily analytics review...");
     try {
       const result = await runDailyAnalyticsReview();

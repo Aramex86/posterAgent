@@ -81,7 +81,7 @@ workflow.addConditionalEdges(
   },
   {
     continue: "discuss", // Loop back for more discussion
-    save: "save",        // Skip approve node — already approved in discuss
+    save: "save", // Skip approve node — already approved in discuss
     rewrite: "rewrite",
     fail: END,
   },
