@@ -363,16 +363,20 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
       const thread_id = threadIdFromCallback || getChatThread(chatId);
 
       if (!thread_id) {
-        await ctx.answerCallbackQuery({
-          text: "❌ Session expired. Please start again with /generate <url>",
-        });
+        await ctx
+          .answerCallbackQuery({
+            text: "❌ Session expired. Please start again with /generate <url>",
+          })
+          .catch(() => {});
         return;
       }
 
       if (action === "discuss_content") {
-        await ctx.answerCallbackQuery({
-          text: "💬 Let's discuss! Type your question or comment.",
-        });
+        await ctx
+          .answerCallbackQuery({
+            text: "💬 Let's discuss! Type your question or comment.",
+          })
+          .catch(() => {});
         await ctx.editMessageReplyMarkup({
           reply_markup: { inline_keyboard: [] },
         });
@@ -398,17 +402,21 @@ export async function telegramBotRoute(fastify: FastifyInstance) {
       const cleanThreadId = thread_id.replace("_discuss", "");
 
       if (approved) {
-        await ctx.answerCallbackQuery({
-          text: "✅ Approved! Generating image...",
-        });
+        await ctx
+          .answerCallbackQuery({
+            text: "✅ Approved! Generating image...",
+          })
+          .catch(() => {});
         await ctx.editMessageReplyMarkup({
           reply_markup: { inline_keyboard: [] },
         });
         await ctx.reply("🎨 Preparing code snippet image...");
       } else {
-        await ctx.answerCallbackQuery({
-          text: "🔄 Please type your feedback below",
-        });
+        await ctx
+          .answerCallbackQuery({
+            text: "🔄 Please type your feedback below",
+          })
+          .catch(() => {});
         await ctx.editMessageReplyMarkup({
           reply_markup: { inline_keyboard: [] },
         });
