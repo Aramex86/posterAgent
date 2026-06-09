@@ -36,6 +36,21 @@ export function registerTelegramBot(fastify: FastifyInstance): void {
   bot.command("testcron", handleTestCron);
   bot.command("generate", handleGenerate);
 
+  // Refresh command menu on every deploy
+  try {
+    await bot.api.setMyCommands([
+      { command: "start", description: "Start the bot and see welcome message" },
+      { command: "generate", description: "Generate a LinkedIn post from URL: /generate <url>" },
+      { command: "health", description: "Check bot health and uptime" },
+      { command: "myid", description: "Get your Telegram chat ID" },
+      { command: "testcron", description: "Trigger daily analytics review (admin only)" },
+      { command: "help", description: "Show help and available commands" },
+    ]);
+    console.log("✅ Telegram command menu refreshed");
+  } catch (err: any) {
+    console.warn("⚠️ Failed to refresh bot commands:", err.message);
+  }
+
   // Callback queries
   bot.on("callback_query:data", async (ctx) => {
     const callbackData = ctx.callbackQuery.data;
