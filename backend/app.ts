@@ -1,7 +1,5 @@
 import { FastifyInstance } from "fastify";
 import { telegramBotRoute } from "./routes/telegramBotRoute.js";
-import { telegramApproveRoute } from "./routes/telegramApproveRoute.js";
-import { telegramPatternApproveRoute } from "./routes/telegramPatternApproveRoute.js";
 import { runDailyAnalyticsReview } from "./utils/patternLearning.js";
 import { bot } from "./utils/telegramBot.js";
 import { env } from "./env.js";
@@ -70,6 +68,4 @@ export async function app(fastify: FastifyInstance) {
   });
 
   await telegramBotRoute(fastify);
-  await telegramApproveRoute(fastify);
-  await telegramPatternApproveRoute(fastify);
 }

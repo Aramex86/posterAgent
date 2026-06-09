@@ -1,5 +1,5 @@
 import * as cheerio from "cheerio";
-import textSplitterFunc from "../utils/textSpliterInChunks";
+import textSplitterFunc from "../utils/textSplitterInChunks";
 import { StateType } from "../state";
 export async function scrapingWebNode(
   state: StateType,
