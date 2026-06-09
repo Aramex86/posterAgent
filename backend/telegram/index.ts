@@ -27,7 +27,7 @@ import {
   getChatThread,
 } from "../utils/telegramSessionStore";
 
-export function registerTelegramBot(fastify: FastifyInstance): void {
+export async function registerTelegramBot(fastify: FastifyInstance): Promise<void> {
   // Commands
   bot.command("start", handleStart);
   bot.command("help", handleHelp);
