@@ -1,8 +1,5 @@
 import { env } from "./env";
 import Fastify from "fastify";
-import cors from "@fastify/cors";
-// import fastifyCors from "@fastify/cors";
-import fastifySSE from "@fastify/sse";
 import { Cron } from "croner";
 import { app } from "./app";
 import { runDailyAnalyticsReview } from "./utils/patternLearning";
@@ -12,36 +9,9 @@ const fastify = Fastify({
   logger: true,
 });
 
-await fastify.register(cors, {
-  origin: (origin, cb) => {
-    const allowedOrigins = [
-      "http://localhost:3000",
-      /^https:\/\/.*\.railway\.app$/,
-      /^https:\/\/.*\.up\.railway\.app$/,
-    ];
-
-    if (
-      !origin ||
-      allowedOrigins.some((o) =>
-        typeof o === "string" ? o === origin : o.test(origin),
-      )
-    ) {
-      cb(null, true);
-      return;
-    }
-    cb(new Error("Not allowed by CORS"), false);
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "Cache-Control"],
-  exposedHeaders: ["Content-Type", "Connection"],
-});
-
-await fastify.register(fastifySSE);
-
 await fastify.register(app);
 
-// Daily analytics review cron job (08:00 UTC)
+// Daily analytics review cron job (10:00 UTC)
 const adminChatId = env.TELEGRAM_ADMIN_CHAT_ID
   ? Number(env.TELEGRAM_ADMIN_CHAT_ID)
   : undefined;
