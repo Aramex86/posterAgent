@@ -47,7 +47,7 @@ const adminChatId = env.TELEGRAM_ADMIN_CHAT_ID
   : undefined;
 
 if (adminChatId) {
-  new Cron("0 0 10 * *", { timezone: "UTC" }, async () => {
+  new Cron("0 10 * * *", { timezone: "UTC" }, async () => {
     console.log("⏰ Running daily analytics review...");
     try {
       const result = await runDailyAnalyticsReview();
@@ -94,7 +94,7 @@ if (adminChatId) {
     }
   });
 
-  console.log("✅ Daily analytics review cron scheduled for 08:00 UTC");
+  console.log("✅ Daily analytics review cron scheduled for 11:00 UTC");
 } else {
   console.warn(
     "⚠️ TELEGRAM_ADMIN_CHAT_ID not set. Daily analytics review will not send Telegram notifications.",
