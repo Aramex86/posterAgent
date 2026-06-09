@@ -13,169 +13,169 @@ export async function handleGenerate(ctx: Context): Promise<void> {
 
   if (parts.length < 2) {
     await ctx.reply(
-      "❌ Please provide a URL.\n\nExample: /generate https://react.dev/reference/react/useActionState",
+      "? Please provide a URL.\n\nExample: /generate https://react.dev/reference/react/useActionState",
     );
     return;
   }
 
   const url = parts[1];
-  const chatId = ctx.chat.id;
+  const chatId = ctx.chat?.id;
+  if (!chatId) {
+    await ctx.reply("? Unable to identify chat.");
+    return;
+  }
+
   const thread_id = `telegram_${chatId}_${Date.now()}`;
 
   try {
     new URL(url);
   } catch {
-    await ctx.reply("❌ Invalid URL provided. Please send a valid URL.");
+    await ctx.reply("? Invalid URL provided. Please send a valid URL.");
     return;
   }
 
-  await ctx.reply(`🚀 Starting post generation for:\n${url}`);
+  await ctx.reply(`?? Starting post generation for:\n${url}`);
 
   setChatThread(chatId, thread_id);
 
   const config = { configurable: { thread_id } };
   const { messageId } = await sendProgressMessage(ctx.api, chatId);
 
-  (async () => {
-    try {
-      const stream = await appGraph.stream(
-        {
-          url,
-          telegramChatId: chatId,
-          docs: [],
-          summary: "",
-          post: {} as any,
-          challenge: "",
-          isApproved: false,
-          feedback: "",
-          error: null,
-          rewriteCount: 0,
-          status: "initialized",
-          imageUrl: "",
-          telegramMessageId: undefined,
-          isPosted: false,
-          postingError: null,
-          isPostingApproved: false,
-        },
-        { ...config, streamMode: "updates" },
-      );
+  // Run graph streaming in background so Telegram command returns immediately
+  void runGraphStream(ctx, chatId, thread_id, config, messageId, url);
+}
 
-      let currentStep = 0;
-      for await (const chunk of stream) {
-        for (const [nodeName] of Object.entries(chunk)) {
-          console.log(`📱 Telegram flow - completed node: ${nodeName}`);
+async function runGraphStream(
+  ctx: Context,
+  chatId: number,
+  thread_id: string,
+  config: { configurable: { thread_id: string } },
+  messageId: number,
+  url: string,
+): Promise<void> {
+  try {
+    const stream = await appGraph.stream(
+      {
+        url,
+        telegramChatId: chatId,
+        docs: [],
+        summary: "",
+        post: {} as any,
+        challenge: "",
+        isApproved: false,
+        feedback: "",
+        error: null,
+        rewriteCount: 0,
+        status: "initialized",
+        imageUrl: "",
+        telegramMessageId: undefined,
+        isPosted: false,
+        postingError: null,
+        isPostingApproved: false,
+      },
+      { ...config, streamMode: "updates" },
+    );
 
-          if (nodeName === "scrape") {
-            currentStep = 1;
-            await updateProgress(
-              ctx.api,
-              chatId,
-              messageId,
-              1,
-              "🔍",
-              "Scraping complete!",
-            );
-          } else if (nodeName === "summarize") {
-            currentStep = 2;
-            await updateProgress(
-              ctx.api,
-              chatId,
-              messageId,
-              2,
-              "📝",
-              "Summarizing complete!",
-            );
-          } else if (nodeName === "generate_content") {
-            currentStep = 3;
-            await updateProgress(
-              ctx.api,
-              chatId,
-              messageId,
-              3,
-              "✍️",
-              "LinkedIn post generated!",
-            );
-          } else if (nodeName === "generate_image") {
-            currentStep = 5;
-            await updateProgress(
-              ctx.api,
-              chatId,
-              messageId,
-              5,
-              "🎨",
-              "Code snippet image generated!",
-            );
-          }
+    for await (const chunk of stream) {
+      for (const [nodeName] of Object.entries(chunk)) {
+        console.log(`?? Telegram flow - completed node: ${nodeName}`);
+
+        if (nodeName === "scrape") {
+          await updateProgress(
+            ctx.api,
+            chatId,
+            messageId,
+            1,
+            "??",
+            "Scraping complete!",
+          );
+        } else if (nodeName === "summarize") {
+          await updateProgress(
+            ctx.api,
+            chatId,
+            messageId,
+            2,
+            "??",
+            "Summarizing complete!",
+          );
+        } else if (nodeName === "generate_content") {
+          await updateProgress(
+            ctx.api,
+            chatId,
+            messageId,
+            3,
+            "??",
+            "LinkedIn post generated!",
+          );
+        } else if (nodeName === "generate_image") {
+          await updateProgress(
+            ctx.api,
+            chatId,
+            messageId,
+            5,
+            "??",
+            "Code snippet image generated!",
+          );
         }
       }
-
-      const snap = await appGraph.getState(config);
-      const isPausedForApproval = snap.next && snap.next.includes("approve");
-      const isPausedForDiscussion = snap.next && snap.next.includes("discuss");
-      const isPausedForPosting =
-        snap.next && snap.next.includes("approve_posting");
-
-      if (isPausedForDiscussion) {
-        console.log(
-          `⏸️ Telegram graph paused at discussion for thread: ${thread_id}`,
-        );
-        await updateProgress(
-          ctx.api,
-          chatId,
-          messageId,
-          3,
-          "💬",
-          "Post generated! Let's discuss before approval...",
-        );
-        await sendPostPreview(
-          ctx.api,
-          chatId,
-          snap.values.post,
-          thread_id,
-          true,
-        );
-        setPendingFeedback(chatId, true);
-        return;
-      }
-
-      if (isPausedForApproval) {
-        console.log(
-          `⏸️ Telegram graph paused at content approval for thread: ${thread_id}`,
-        );
-        await updateProgress(
-          ctx.api,
-          chatId,
-          messageId,
-          3,
-          "✅",
-          "Content generated! Waiting for your review...",
-        );
-        await sendPostPreview(
-          ctx.api,
-          chatId,
-          snap.values.post,
-          thread_id,
-          false,
-        );
-        setPendingFeedback(chatId, true);
-        return;
-      }
-
-      if (isPausedForPosting) {
-        console.log(
-          `⏸️ Telegram graph paused at posting approval for thread: ${thread_id}`,
-        );
-      }
-    } catch (err: any) {
-      console.error(
-        `❌ Telegram background graph error on thread ${thread_id}:`,
-        err,
-      );
-      await ctx
-        .reply(`❌ Error generating post: ${err.message}`)
-        .catch(() => {});
     }
-  })();
+
+    const snap = await appGraph.getState(config);
+    const isPausedForApproval = snap.next?.includes("approve") ?? false;
+    const isPausedForDiscussion = snap.next?.includes("discuss") ?? false;
+
+    if (isPausedForDiscussion) {
+      console.log(
+        `?? Telegram graph paused at discussion for thread: ${thread_id}`,
+      );
+      await updateProgress(
+        ctx.api,
+        chatId,
+        messageId,
+        3,
+        "??",
+        "Post generated! Let's discuss before approval...",
+      );
+      await sendPostPreview(ctx.api, chatId, snap.values.post, thread_id, true);
+      setPendingFeedback(chatId, true);
+      return;
+    }
+
+    if (isPausedForApproval) {
+      console.log(
+        `?? Telegram graph paused at content approval for thread: ${thread_id}`,
+      );
+      await updateProgress(
+        ctx.api,
+        chatId,
+        messageId,
+        3,
+        "?",
+        "Content generated! Waiting for your review...",
+      );
+      await sendPostPreview(
+        ctx.api,
+        chatId,
+        snap.values.post,
+        thread_id,
+        false,
+      );
+      setPendingFeedback(chatId, true);
+      return;
+    }
+
+    if (snap.next?.includes("approve_posting")) {
+      console.log(
+        `?? Telegram graph paused at posting approval for thread: ${thread_id}`,
+      );
+    }
+  } catch (err: any) {
+    console.error(
+      `? Telegram background graph error on thread ${thread_id}:`,
+      err,
+    );
+    await ctx.reply(`? Error generating post: ${err.message}`).catch(() => {});
+  }
 }
 
 async function sendPostPreview(
@@ -192,24 +192,24 @@ async function sendPostPreview(
   const keyboard = includeDiscuss
     ? [
         [
-          { text: "✅ Approve", callback_data: `approve_content:${thread_id}` },
-          { text: "💬 Discuss", callback_data: `discuss_content:${thread_id}` },
+          { text: "? Approve", callback_data: `approve_content:${thread_id}` },
+          { text: "?? Discuss", callback_data: `discuss_content:${thread_id}` },
         ],
-        [{ text: "🔄 Rewrite", callback_data: `rewrite_content:${thread_id}` }],
+        [{ text: "?? Rewrite", callback_data: `rewrite_content:${thread_id}` }],
       ]
     : [
         [
           {
-            text: "✅ Approve & Continue",
+            text: "? Approve & Continue",
             callback_data: `approve_content:${thread_id}`,
           },
-          { text: "🔄 Rewrite", callback_data: `rewrite_content:${thread_id}` },
+          { text: "?? Rewrite", callback_data: `rewrite_content:${thread_id}` },
         ],
       ];
 
   await api.sendMessage(
     chatId,
-    `📝 *Post Preview*\n\n` +
+    `?? *Post Preview*\n\n` +
       `*${escapeMarkdown(postTitle)}*\n\n` +
       `${escapeMarkdown(postContent.slice(0, 800))}${postContent.length > 800 ? "..." : ""}\n\n` +
       `${escapeMarkdown(hashtags)}\n\n` +

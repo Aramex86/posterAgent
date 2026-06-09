@@ -244,7 +244,8 @@ OUTPUT SCHEMA:
     parsed = JSON.parse(content) as PatternReviewResult;
   } catch {
     // Try to extract JSON from markdown code block
-    const match = content.match(/```json\s*([\s\S]*?)\s*```/);
+    const jsonRegex = /```json\s*([\s\S]*?)\s*```/;
+    const match = jsonRegex.exec(content);
     if (match) {
       parsed = JSON.parse(match[1]) as PatternReviewResult;
     } else {

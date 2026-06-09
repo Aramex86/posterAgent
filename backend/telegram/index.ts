@@ -4,9 +4,9 @@ import { bot } from "../utils/telegramBot";
 
 import { handleStart } from "./commands/start";
 import { handleHelp } from "./commands/help";
-import { handleMyId } from "./commands/myid";
 import { handleTestCron } from "./commands/testcron";
 import { handleGenerate } from "./commands/generate";
+import { handleMyId } from "./commands/myid";
 
 import { handleApproveContent } from "./callbacks/approveContent";
 import { handleRewriteContent } from "./callbacks/rewriteContent";

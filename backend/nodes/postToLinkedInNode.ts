@@ -218,15 +218,15 @@ export async function postToLinkedInNode(
 
 function escapeMarkdown(text: string): string {
   return text
-    .replaceAll("_", "\\_")
-    .replaceAll("*", "\\*")
-    .replaceAll("[", "\\[")
-    .replaceAll("]", "\\]")
-    .replaceAll("(", "\\(")
-    .replaceAll(")", "\\)")
-    .replaceAll("~", "\\~")
-    .replaceAll("`", "\\`")
-    .replaceAll(">", "\\>")
-    .replaceAll("#", "\\#")
-    .replaceAll("+", "\\+");
+    .replaceAll("_", String.raw`\_`)
+    .replaceAll("*", String.raw`\*`)
+    .replaceAll("[", String.raw`\[`)
+    .replaceAll("]", String.raw`\]`)
+    .replaceAll("(", String.raw`\(`)
+    .replaceAll(")", String.raw`\)`)
+    .replaceAll("~", String.raw`\~`)
+    .replaceAll("`", String.raw`\``)
+    .replaceAll(">", String.raw`\>`)
+    .replaceAll("#", String.raw`\#`)
+    .replaceAll("+", String.raw`\+`);
 }

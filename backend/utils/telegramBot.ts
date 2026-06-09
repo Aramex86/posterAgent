@@ -4,8 +4,8 @@ import { env } from "../env";
 export const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
 
 // Set bot commands menu
-bot.api
-  .setMyCommands([
+try {
+  await bot.api.setMyCommands([
     { command: "start", description: "Start the bot and see welcome message" },
     {
       command: "generate",
@@ -17,10 +17,10 @@ bot.api
       description: "Trigger daily analytics review (admin only)",
     },
     { command: "help", description: "Show help and available commands" },
-  ])
-  .catch((err) => {
-    console.warn("⚠️ Failed to set bot commands:", err.message);
-  });
+  ]);
+} catch (err: any) {
+  console.warn("⚠️ Failed to set bot commands:", err.message);
+}
 
 // Handle 409 Conflict errors gracefully (when old deployment is still running)
 bot.catch((err) => {
