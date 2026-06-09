@@ -4,6 +4,7 @@ import { bot } from "../utils/telegramBot";
 
 import { handleStart } from "./commands/start";
 import { handleHelp } from "./commands/help";
+import { handleHealth } from "./commands/health";
 import { handleTestCron } from "./commands/testcron";
 import { handleGenerate } from "./commands/generate";
 import { handleMyId } from "./commands/myid";
@@ -30,6 +31,7 @@ export function registerTelegramBot(fastify: FastifyInstance): void {
   // Commands
   bot.command("start", handleStart);
   bot.command("help", handleHelp);
+  bot.command("health", handleHealth);
   bot.command("myid", handleMyId);
   bot.command("testcron", handleTestCron);
   bot.command("generate", handleGenerate);

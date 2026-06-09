@@ -11,6 +11,7 @@ try {
       command: "generate",
       description: "Generate a LinkedIn post from URL: /generate <url>",
     },
+    { command: "health", description: "Check bot health and uptime" },
     { command: "myid", description: "Get your Telegram chat ID" },
     {
       command: "testcron",
