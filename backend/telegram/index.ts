@@ -27,7 +27,9 @@ import {
   getChatThread,
 } from "../utils/telegramSessionStore";
 
-export async function registerTelegramBot(fastify: FastifyInstance): Promise<void> {
+export async function registerTelegramBot(
+  fastify: FastifyInstance,
+): Promise<void> {
   // Commands
   bot.command("start", handleStart);
   bot.command("help", handleHelp);
@@ -39,11 +41,20 @@ export async function registerTelegramBot(fastify: FastifyInstance): Promise<voi
   // Refresh command menu on every deploy
   try {
     await bot.api.setMyCommands([
-      { command: "start", description: "Start the bot and see welcome message" },
-      { command: "generate", description: "Generate a LinkedIn post from URL: /generate <url>" },
+      {
+        command: "start",
+        description: "Start the bot and see welcome message",
+      },
+      {
+        command: "generate",
+        description: "Generate a LinkedIn post from URL: /generate <url>",
+      },
       { command: "health", description: "Check bot health and uptime" },
       { command: "myid", description: "Get your Telegram chat ID" },
-      { command: "testcron", description: "Trigger daily analytics review (admin only)" },
+      {
+        command: "testcron",
+        description: "Trigger daily analytics review (admin only)",
+      },
       { command: "help", description: "Show help and available commands" },
     ]);
     console.log("✅ Telegram command menu refreshed");
